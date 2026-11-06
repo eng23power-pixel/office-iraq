@@ -1,0 +1,1295 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<meta name="theme-color" content="#064e3b" />
+<title>منظومة إدارة المعاملات</title>
+<meta name="description" content="منظومة ذكية عامة لإدارة وفرز طلبات ومعاملات المستفيدين لأي جهة، مع تدقيق المستمسكات بالذكاء الاصطناعي، الباركود، والمراسلة عبر واتساب. تعمل على أي جهاز وتُربط بكوكل سكربت." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ نظام التصميم — نفس أسلوب المنظومة (أخضر/رمادي/ذهبي) ============ */
+:root{
+  --em-950:#022c22; --em-900:#064e3b; --em-800:#065f46; --em-700:#047857; --em-600:#059669; --em-50:#ecfdf5; --em-100:#d1fae5; --em-200:#a7f3d0; --em-300:#6ee7b7;
+  --sl-900:#0f172a; --sl-800:#1e293b; --sl-700:#334155; --sl-600:#475569; --sl-500:#64748b; --sl-400:#94a3b8; --sl-300:#cbd5e1; --sl-200:#e2e8f0; --sl-100:#f1f5f9; --sl-50:#f8fafc;
+  --am-300:#fcd34d; --am-400:#fbbf24; --am-500:#f59e0b;
+  --rose:#e11d48; --red:#dc2626; --red-50:#fef2f2; --red-200:#fecaca; --red-900:#7f1d1d;
+  --blue:#2563eb; --amber-50:#fffbeb; --amber-200:#fde68a; --amber-900:#78350f;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.05); --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1); --shadow-2xl:0 25px 50px -12px rgba(0,0,0,.25);
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Cairo','IBM Plex Sans Arabic',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--sl-50);color:var(--sl-900);-webkit-font-smoothing:antialiased;line-height:1.6;font-size:14px}
+.mono,.tabular{font-family:'JetBrains Mono',monospace;direction:ltr;unicode-bidi:plaintext}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--em-600);color:#fff}
+.hidden{display:none !important}
+/* layout helpers */
+.flex{display:flex}.col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}
+.gap1{gap:4px}.gap2{gap:8px}.gap3{gap:12px}.gap4{gap:16px}.gap5{gap:20px}.gap6{gap:24px}
+.wrap{flex-wrap:wrap}.grow{flex:1}.shrink0{flex-shrink:0}
+.grid{display:grid}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}.g2{grid-template-columns:1fr}.hide-sm{display:none}}
+@media(min-width:861px){.only-sm{display:none}}
+.wrapmax{max-width:1200px;margin:0 auto;width:100%;padding:0 16px}
+.txt-xs{font-size:11px}.txt-sm{font-size:12px}.txt-base{font-size:14px}.txt-lg{font-size:16px}.txt-xl{font-size:19px}.txt-2xl{font-size:23px}
+.b{font-weight:700}.sb{font-weight:600}.black{font-weight:900}
+.muted{color:var(--sl-500)}.muted2{color:var(--sl-400)}
+.em{color:var(--em-800)}.center{text-align:center}
+.mt1{margin-top:4px}.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}
+/* components */
+.card{background:#fff;border:1px solid var(--sl-200);border-radius:var(--r);box-shadow:var(--shadow-xs)}
+.pad4{padding:16px}.pad5{padding:20px}.pad6{padding:24px}.pad3{padding:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;font-weight:700;font-size:12px;transition:.15s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn-em{background:var(--em-800);color:#fff}.btn-em:hover{background:var(--em-900)}
+.btn-dark{background:var(--sl-900);color:var(--am-300)}.btn-dark:hover{background:var(--sl-800)}
+.btn-gray{background:var(--sl-100);color:var(--sl-700);border:1px solid var(--sl-200)}.btn-gray:hover{background:var(--sl-200)}
+.btn-white{background:#fff;color:var(--sl-700);border:1px solid var(--sl-300)}.btn-white:hover{background:var(--sl-50)}
+.btn-wa{background:#16a34a;color:#fff}.btn-wa:hover{background:#15803d}
+.btn-sm{padding:6px 10px;font-size:11px;border-radius:8px}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.125em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+input,select,textarea{width:100%;padding:9px 11px;background:var(--sl-50);border:1px solid var(--sl-200);border-radius:10px;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{background:#fff;border-color:var(--em-600);box-shadow:0 0 0 3px rgba(5,150,105,.15)}
+label{display:block;font-weight:700;color:var(--sl-700);margin-bottom:5px;font-size:12px}
+.field{margin-bottom:14px}
+/* badges for status */
+.st{padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.st-recv{background:#dbeafe;color:#1e40af}.st-rev{background:#fef9c3;color:#854d0e}.st-wait{background:#ffedd5;color:#9a3412}
+.st-sent{background:var(--em-100);color:var(--em-800)}.st-follow{background:#e0e7ff;color:#3730a3}.st-done{background:#dcfce7;color:#166534}.st-rej{background:#fee2e2;color:#991b1b}
+.urg-high{background:#fee2e2;color:#991b1b}.urg-mid{background:#fef9c3;color:#854d0e}.urg-low{background:var(--sl-100);color:var(--sl-600)}
+/* modal */
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--shadow-2xl);width:100%;max-height:94vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--sl-100);display:flex;align-items:center;justify-content:between;gap:10px}
+.modal-b{padding:20px;overflow-y:auto}
+.x{padding:6px;border-radius:8px;color:var(--sl-400)}.x:hover{background:var(--sl-100);color:var(--sl-700)}
+/* header */
+header.top{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--sl-200)}
+.seal{width:40px;height:40px;border-radius:9px;overflow:hidden;border:1px solid rgba(6,78,59,.1);background:var(--em-900);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.seal img{width:100%;height:100%;object-fit:cover}
+.brandmark{border-radius:10px;background:linear-gradient(135deg,var(--em-800),var(--em-950));color:var(--am-300);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(6,78,59,.15)}
+.brandmark .ic{width:55%;height:55%;stroke-width:1.8}
+.switch{display:flex;padding:4px;background:var(--sl-100);border:1px solid var(--sl-200);border-radius:12px;font-size:12px;font-weight:700}
+.switch button{padding:6px 12px;border-radius:8px;color:var(--sl-600);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.switch button.on-em{background:var(--em-800);color:#fff}
+.switch button.on-dark{background:var(--sl-900);color:var(--am-300)}
+.navlink{padding:4px 0;border-bottom:2px solid transparent;color:var(--sl-600);font-weight:600;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.navlink.active{border-color:var(--em-700);color:var(--em-800);font-weight:700}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--em-300);display:inline-block}
+.bell{position:relative;padding:8px;border-radius:10px;border:1px solid var(--sl-200);background:#fff}
+.bell .cnt{position:absolute;top:-6px;left:-6px;background:var(--rose);color:#fff;font-size:10px;font-weight:900;border-radius:999px;padding:1px 5px;border:2px solid #fff}
+/* stat cards */
+.stat{background:#fff;border:1px solid var(--sl-200);border-radius:var(--r);padding:14px;cursor:pointer;transition:.15s}
+.stat:hover{box-shadow:var(--shadow);border-color:var(--em-300)}
+.stat.active{border-color:var(--em-600);background:var(--em-50)}
+.stat .n{font-size:26px;font-weight:900;font-family:'JetBrains Mono',monospace}
+/* table/list rows */
+.req-row{background:#fff;border:1px solid var(--sl-200);border-radius:var(--r);padding:14px;transition:.15s}
+.req-row:hover{box-shadow:var(--shadow);border-color:var(--sl-300)}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--sl-100);font-size:12px}
+.kv:last-child{border-bottom:none}
+/* timeline */
+.tl{position:relative;padding-right:22px}
+.tl:before{content:'';position:absolute;right:6px;top:4px;bottom:4px;width:2px;background:var(--sl-200)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item:before{content:'';position:absolute;right:-20px;top:3px;width:12px;height:12px;border-radius:999px;background:#fff;border:2px solid var(--sl-300)}
+.tl-item.done:before{background:var(--em-600);border-color:var(--em-600)}
+.tl-item.current:before{background:var(--am-400);border-color:var(--am-400);box-shadow:0 0 0 4px rgba(251,191,36,.25)}
+/* AI assistant */
+.fab{position:fixed;bottom:20px;left:20px;z-index:50;width:56px;height:56px;border-radius:999px;background:var(--em-800);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg)}
+.fab:hover{background:var(--em-900)}
+.ai-panel{position:fixed;bottom:86px;left:20px;z-index:55;width:380px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);background:#fff;border:1px solid var(--sl-200);border-radius:16px;box-shadow:var(--shadow-2xl);display:flex;flex-direction:column;overflow:hidden}
+.ai-head{background:var(--em-950);color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sl-50)}
+.bubble{max-width:85%;padding:9px 12px;border-radius:14px;font-size:13px;white-space:pre-wrap;line-height:1.7}
+.bubble.u{align-self:flex-start;background:var(--em-800);color:#fff;border-bottom-right-radius:4px}
+.bubble.a{align-self:flex-end;background:#fff;border:1px solid var(--sl-200);border-bottom-left-radius:4px}
+.ai-in{padding:10px;border-top:1px solid var(--sl-200);display:flex;gap:8px;background:#fff}
+.ai-in input{border-radius:999px}
+.spin{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.pulse{animation:pl 1.6s ease-in-out infinite}@keyframes pl{50%{opacity:.5}}
+/* barcode */
+.barcode-box{background:#fff;padding:12px;border:1px dashed var(--sl-300);border-radius:10px;text-align:center}
+.scan-video{width:100%;border-radius:12px;background:#000;max-height:320px;object-fit:cover}
+.scan-frame{position:relative}
+.scan-line{position:absolute;left:8%;right:8%;height:2px;background:var(--em-400);box-shadow:0 0 8px var(--em-600);top:50%;animation:scanln 2s ease-in-out infinite}
+@keyframes scanln{0%,100%{top:20%}50%{top:80%}}
+/* banner */
+.banner{padding:8px 16px;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.banner.ok{background:var(--em-900);color:#fff}
+.banner.warn{background:var(--amber-50);color:var(--amber-900);border-bottom:1px solid var(--amber-200)}
+.banner.off{background:var(--sl-800);color:var(--sl-200)}
+footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-top:auto}
+.toast{position:fixed;bottom:20px;right:20px;z-index:80;background:var(--sl-900);color:#fff;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow-lg);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;max-width:360px}
+/* print */
+@media print{
+  .no-print{display:none !important}
+  body{background:#fff}
+  .print-area{box-shadow:none !important;border:none !important}
+  @page{margin:14mm}
+}
+.print-only{display:none}
+@media print{.print-only{display:block}}
+/* login hero */
+.hero{background:linear-gradient(135deg,var(--em-950),var(--em-800));color:#fff}
+.input-ic{position:relative}
+.input-ic .ic{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--sl-400);pointer-events:none}
+.input-ic input{padding-right:34px}
+.codebox{background:var(--sl-900);color:#e2e8f0;border-radius:12px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;direction:ltr;text-align:left;overflow-x:auto;max-height:360px;line-height:1.7;white-space:pre}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- أيقونات SVG مضمّنة (Lucide) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<defs>
+<g id="i-shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></g>
+<g id="i-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>
+<g id="i-plus"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></g>
+<g id="i-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></g>
+<g id="i-x"><path d="M18 6 6 18M6 6l12 12"/></g>
+<g id="i-cloud"><path d="M17.5 19a4.5 4.5 0 0 0 0-9h-1.8A7 7 0 1 0 4 16.9"/></g>
+<g id="i-key"><path d="m15.5 7.5 3 3L22 7l-3-3"/><path d="m18.5 10.5-8 8a2.8 2.8 0 1 1-4-4l8-8"/><circle cx="7" cy="17" r="3"/></g>
+<g id="i-wa"><path d="M3 21l1.9-5.5a9 9 0 1 1 3.6 3.6z"/><path d="M8.5 9.5c0 4 3 6.5 6.5 6.5"/></g>
+<g id="i-bell"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></g>
+<g id="i-file"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></g>
+<g id="i-sparkle"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></g>
+<g id="i-cam"><path d="M14.5 4h-5L8 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4z"/><circle cx="12" cy="13" r="3.5"/></g>
+<g id="i-barcode"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></g>
+<g id="i-print"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></g>
+<g id="i-check"><path d="M20 6 9 17l-5-5"/></g>
+<g id="i-check2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></g>
+<g id="i-alert"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="10"/></g>
+<g id="i-logout"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></g>
+<g id="i-refresh"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></g>
+<g id="i-dash"><path d="M3 3h8v8H3zM13 3h8v5h-8zM13 12h8v9h-8zM3 15h8v6H3z"/></g>
+<g id="i-globe"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></g>
+<g id="i-ext"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></g>
+<g id="i-copy"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>
+<g id="i-send"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></g>
+<g id="i-chat"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></g>
+<g id="i-lock"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
+<g id="i-clip"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/></g>
+<g id="i-filter"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></g>
+<g id="i-cog"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V22a2 2 0 1 1-4 0v-.2A1.6 1.6 0 0 0 7 20.3a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.2A1.6 1.6 0 0 0 3.7 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z"/></g>
+<g id="i-building"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01M9 17h.01M15 17h.01"/></g>
+<g id="i-sort"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 4v16"/></g>
+<g id="i-list"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></g>
+</defs>
+</svg>
+
+<script>
+"use strict";
+/* =========================================================================
+   منظومة إدارة المعاملات · الجهة
+   تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
+   ========================================================================= */
+const APP = {
+  version: '2.2.0',
+  name: 'منظومة إدارة المعاملات',
+  masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
+  office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
+  brandLine: 'أ.م. أحمد الربيعي للحلول الهندسية'
+};
+// علامة محايدة بدل الشعار الرسمي (يمكن ضبط شعار الجهة لاحقاً من الترخيص)
+function brandMark(sz){ const s=sz||40; return `<div class="brandmark" style="width:${s}px;height:${s}px">${icon('building','ic')}</div>`; }
+
+/* ---------- أدوات عامة ---------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = (id,cls='ic')=>`<svg class="${cls}" viewBox="0 0 24 24"><use href="#i-${id}"/></svg>`;
+const nowStr = ()=> new Date().toISOString().replace('T',' ').substring(0,16);
+const b64u = {
+  enc: buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+  dec: str => { str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4)str+='='; const b=atob(str),a=new Uint8Array(b.length); for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i); return a; }
+};
+function toast(msg, ok=true){
+  const t=document.createElement('div'); t.className='toast';
+  t.innerHTML = (ok?icon('check2'):icon('alert'))+'<span>'+esc(msg)+'</span>';
+  if(ok) t.querySelector('svg').style.color='#6ee7b7'; else t.querySelector('svg').style.color='#fca5a5';
+  document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';},2600); setTimeout(()=>t.remove(),3100);
+}
+function normalizePhone(p){ let c=String(p||'').replace(/\D/g,''); if(c.startsWith('00964'))c=c.slice(5); if(c.startsWith('964'))c=c.slice(3); if(c.startsWith('0'))c=c.slice(1); return '964'+c; }
+function waLink(phone,text){ return 'https://wa.me/'+normalizePhone(phone)+'?text='+encodeURIComponent(text); }
+
+/* ---------- الحالة العامة ---------- */
+const STATUSES = ['مستلم','قيد التدقيق','بانتظار مستمسكات','أحيل بكتاب رسمي','قيد المتابعة بالوزارة','منجز وموافق عليه','معتذر عنه'];
+const STATUS_CLASS = {'مستلم':'st-recv','قيد التدقيق':'st-rev','بانتظار مستمسكات':'st-wait','أحيل بكتاب رسمي':'st-sent','قيد المتابعة بالوزارة':'st-follow','منجز وموافق عليه':'st-done','معتذر عنه':'st-rej'};
+const GOVS = ['بغداد','البصرة','نينوى','أربيل','النجف الأشرف','كربلاء المقدسة','ذي قار','بابل','الأنبار','كركوك','ديالى','صلاح الدين','واسط','ميسان','المثنى','القادسية (الديوانية)','السليمانية','دهوك'];
+const MINISTRIES = ['وزارة العمل والشؤون الاجتماعية','وزارة الصحة','وزارة الإعمار والإسكان والبلديات','مؤسسة الشهداء','مؤسسة السجناء السياسيين','وزارة الدفاع','وزارة الداخلية','وزارة التعليم العالي والبحث العلمي','وزارة التربية','وزارة الكهرباء','وزارة النفط','أمانة بغداد','ديوان المحافظة'];
+const CATEGORIES = ['الرعاية والضمان الاجتماعي','العلاج واللجان الطبية','الإعمار وتخصيص الأراضي','حقوق الشهداء والجرحى','التربية والتعليم العالي','قوى الأمن والداخلية والدفاع','خدمات وبلديات وشبكات ماء'];
+const URGENCIES = ['عاجل جداً','متوسط','عادي'];
+
+const state = {
+  mode: 'citizen',           // citizen | office
+  tab: 'citizen-portal',
+  session: JSON.parse(localStorage.getItem('naib_session')||'null'),
+  requests: [],
+  settings: JSON.parse(localStorage.getItem('naib_settings')||'{}'),
+  filters: { q:'', gov:'الكل', ministry:'الكل', urgency:'الكل', docs:'الكل', status:'الكل' },
+  online: navigator.onLine,
+  ai: { open:false, busy:false, messages:[] }
+};
+state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office }, state.settings);
+if(state.settings.geminiModel==='gemini-1.5-flash'||state.settings.geminiModel==='gemini-pro'||!state.settings.geminiModel){ state.settings.geminiModel='gemini-flash-latest'; }
+function saveSettings(){ localStorage.setItem('naib_settings', JSON.stringify(state.settings)); }
+
+/* ===========================================================================
+   الترخيص السحابي الموحّد (نفس نظام RetailPro / RestoCafe / رُقيّ / المخزن)
+   عقد تشغيل RTL2 موقّع بمفتاح LIC2 العام · تفعيل عبر رابط #go= · تحقق كل 6 ساعات
+   · يعمل أوفلاين 30 يوماً ثم 7 أيام سماح · مربوط ببصمة الجهاز والخادم المركزي
+   المنتج هنا: naib — يُدار من لوحة تحكم التراخيص الموحّدة لديك
+   =========================================================================== */
+const LIC = {
+  PROD: 'naib',
+  PREFIX: 'NBL1.',
+  LSKEY: 'naib-lic2',
+  GRACE: 7*864e5,
+  // المفتاح العام LIC2 (RSA) — نفس مفتاح بقية برامجك، للتحقق فقط. المفتاح الخاص يبقى في خادمك.
+  PUB: {kty:'RSA', e:'AQAB', n:'ransa1_snXCDeB-LCZOVjD8x5ex8OFR8tFUn4x7o-AaxPgw5MRhqOvnDM6t60QnVz70L6_fE9kTevMiVPp7JaVBNRx_d6hyIGK9qFtusEeCDkMbWyKcCcEpvoeZM1RZjdy7ic3Eed1lopwzvYz9rtGAyS7fcn2gbgv5t4D3io64PosROx0Yo6symcZ3dJePX4-meHVmikMHNHUxjbsf76bkcdmrc-JHzqL7ewiPPgL7kp6aQfYiQyS_i2Nw6fNli7scWPexJe0clgtvCebmFXR8TfVJu92Z6-Z5WmVJd0G0ktDHCH4dojouaugEYZxXCzQGbRF5nC9DcPOn3z1RM4Q'},
+  _b64uToStr(b){ b=String(b).replace(/-/g,'+').replace(/_/g,'/'); while(b.length%4)b+='='; return decodeURIComponent(escape(atob(b))); },
+  async deviceId(){
+    let t=null; try{ t=localStorage.getItem('naib-dev'); }catch(e){}
+    if(!t){ const a=new Uint8Array(9); crypto.getRandomValues(a); t='B-'+[...a].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(); try{ localStorage.setItem('naib-dev',t); }catch(e){} }
+    return t;
+  },
+  async rid(src){ const e=await crypto.subtle.digest('SHA-256', new TextEncoder().encode('naib-office:'+String(src||'').trim().toLowerCase())); return [...new Uint8Array(e)].slice(0,8).map(a=>a.toString(16).padStart(2,'0')).join('').toUpperCase(); },
+  devLabel(){ const os=/Android/i.test(navigator.userAgent)?'Android':/iPhone|iPad/i.test(navigator.userAgent)?'iPhone':'متصفح'; return (os+' · '+(state.settings.officeName||APP.office)).slice(0,60); },
+  stored(){ try{ return JSON.parse(localStorage.getItem(this.LSKEY)||'null'); }catch(e){ return null; } },
+  save(o){ try{ localStorage.setItem(this.LSKEY, JSON.stringify(o)); }catch(e){} },
+  async call(url, body){ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'}); if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); },
+  parseLink(t){
+    t=String(t||'').trim(); try{ t=decodeURIComponent(t); }catch(e){}
+    const m = t.match(/NBL1\.([A-Za-z0-9_\-]+)/) || t.match(/[#&]go=([A-Za-z0-9_\-]{20,})/) || t.match(/^([A-Za-z0-9_\-]{40,})$/);
+    if(!m) return null;
+    try{ const a=JSON.parse(this._b64uToStr(m[1])); return (a&&a.l&&a.l.k&&a.l.s)?a:null; }catch(e){ return null; }
+  },
+  async verify(lease){
+    try{
+      const e=String(lease||'').split('.');
+      if(e.length!==3 || e[0]!=='RTL2') return null;
+      const key=await crypto.subtle.importKey('jwk', {kty:'RSA', n:this.PUB.n, e:this.PUB.e, alg:'RS256', ext:true}, {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['verify']);
+      const sig=Uint8Array.from(atob(e[2].replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((e[2].length+3)%4)), c=>c.charCodeAt(0));
+      const ok=await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, new TextEncoder().encode(e[1]));
+      return ok ? JSON.parse(this._b64uToStr(e[1])) : null;
+    }catch(e){ return null; }
+  },
+  async activate(linkOrCode){
+    const e=this.parseLink(linkOrCode);
+    if(!e) throw new Error('رابط/رمز التفعيل غير صحيح أو ناقص. انسخه كاملاً من رسالة واتساب.');
+    const srv=e.l.s, cloud=(e.c&&e.c.u)||'', fp=await this.deviceId(), rid=await this.rid(cloud||e.l.k);
+    const c=await this.call(srv, {act:'lic_activate', key:e.l.k, fp, rid, shop:e.n||'', dev:this.devLabel(), ver:APP.version, os:navigator.platform||'', prod:this.PROD});
+    if(!c.ok) throw new Error(c.error||'رُفض التفعيل');
+    const p=await this.verify(c.lease);
+    if(!p) throw new Error('رد خادم التراخيص غير موقّع بمفتاحك. تأكد أن الرابط من لوحتك.');
+    if(p.prod!==this.PROD) throw new Error('هذا الترخيص لبرنامج آخر');
+    this.save({lease:c.lease, s:srv, k:e.l.k, rid, cloud, n:e.n||'', w:e.w||'', at:Date.now(), msg:c.msg||''});
+    if(cloud && !state.settings.gasUrl){ state.settings.gasUrl=cloud; saveSettings(); }
+    if(e.n && (!state.settings.officeName || state.settings.officeName===APP.office)){ state.settings.officeName=e.n; saveSettings(); }
+    return await this.evaluate();
+  },
+  async refresh(force){
+    const e=this.stored(); if(!e||!e.k) return;
+    if(!force && e.at && (Date.now()-e.at < 6*36e5) && !e.blocked) return;
+    try{
+      const a=await this.call(e.s, {act:'lic_check', key:e.k, fp:await this.deviceId(), rid:e.rid, ver:APP.version, dev:this.devLabel()});
+      if(a.ok && a.status==='active' && a.lease && await this.verify(a.lease)){ Object.assign(e,{lease:a.lease, at:Date.now(), msg:a.msg||''}); delete e.blocked; delete e.blockMsg; this.save(e); }
+      else if(a.ok && ['revoked','reset','unknown'].includes(a.status)){ e.blocked = a.status==='reset'?'reset':'suspended'; e.blockMsg=a.msg||''; this.save(e); }
+    }catch(err){ /* بلا إنترنت: نعتمد على مهلة السماح */ }
+    return await this.evaluate();
+  },
+  async evaluate(){
+    const t=this.stored();
+    if(!t||!t.lease) return {state:'none'};
+    const p=await this.verify(t.lease);
+    if(t.blocked) return {state: t.blocked==='reset'?'reset':'suspended', reason:t.blockMsg, payload:p};
+    const fp=await this.deviceId();
+    if(!p || p.prod!==this.PROD || (p.fp && p.fp!==fp)) return {state:'invalid', reason: p?(p.fp&&p.fp!==fp?'الترخيص مربوط بجهاز آخر':'الترخيص لبرنامج آخر'):'التوقيع غير صالح'};
+    const now=Date.now(), until=p.until || (t.at + 30*864e5);
+    if(now < until) return {state:'active', payload:p};
+    if(now < until + this.GRACE) return {state:'grace', payload:p, graceLeft: Math.ceil((until+this.GRACE-now)/864e5)};
+    return {state:'offline-expired', payload:p};
+  }
+};
+
+/* ===========================================================================
+   مولّد باركود Code128 (نقي بلا مكتبات خارجية) → SVG
+   =========================================================================== */
+const Barcode = (function(){
+  const P = ["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","11000111010"];
+  const START_B=104, STOP=106;
+  return function(text){
+    text = String(text||'');
+    let codes=[START_B], sum=START_B;
+    for(let i=0;i<text.length;i++){ let v=text.charCodeAt(i)-32; if(v<0||v>94)v=0; codes.push(v); sum+=v*(i+1); }
+    codes.push(sum%103); codes.push(STOP);
+    let bits=''; codes.forEach(c=>bits+=P[c]); bits+='11';
+    const h=56, qz=10; let x=qz, rects='';
+    for(let i=0;i<bits.length;){ let j=i; while(j<bits.length&&bits[j]===bits[i])j++; const w=j-i; if(bits[i]==='1')rects+=`<rect x="${x}" y="0" width="${w}" height="${h}" fill="#000"/>`; x+=w; i=j; }
+    const total=x+qz;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${h+18}" width="100%" style="max-width:320px"><rect width="${total}" height="${h+18}" fill="#fff"/>${rects}<text x="${total/2}" y="${h+14}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#000">${esc(text)}</text></svg>`;
+  };
+})();
+
+/* ===========================================================================
+   طبقة البيانات (تخزين محلي أوفلاين أولاً + مزامنة كوكل سكربت)
+   =========================================================================== */
+const Store = {
+  load(){ try{ const d=JSON.parse(localStorage.getItem('naib_requests')); if(Array.isArray(d)&&d.length){ state.requests=d; return; } }catch(e){} state.requests = SEED.slice(); this.persist(); },
+  persist(){ localStorage.setItem('naib_requests', JSON.stringify(state.requests)); },
+  byTracking(t){ t=String(t||'').trim().toLowerCase(); return state.requests.find(r=> r.trackingId.toLowerCase()===t || r.phone===t || r.nationalId===t); },
+  upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(state.settings.gasUrl) GAS.push(); },
+  stats(){ const s={total:state.requests.length,received:0,underReview:0,waitingDocs:0,dispatched:0,approved:0}; state.requests.forEach(r=>{ if(r.status==='مستلم')s.received++; if(r.status==='قيد التدقيق')s.underReview++; if(r.status==='بانتظار مستمسكات')s.waitingDocs++; if(r.status==='أحيل بكتاب رسمي')s.dispatched++; if(r.status==='منجز وموافق عليه')s.approved++; }); return s; },
+  newTracking(){ let t; do{ t='IQ-2026-'+Math.floor(1000+Math.random()*9000); }while(state.requests.some(r=>r.trackingId===t)); return t; }
+};
+
+/* مزامنة كوكل سكربت ثنائية الاتجاه */
+const GAS = {
+  async push(){
+    if(!state.settings.gasUrl||!state.online) return {ok:false};
+    try{
+      const res = await fetch(state.settings.gasUrl, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action:'SYNC_ALL', requests: state.requests}) });
+      const data = await res.json().catch(()=>({}));
+      return {ok:true, data};
+    }catch(e){ return {ok:false, error:e.message}; }
+  },
+  async pull(){
+    if(!state.settings.gasUrl||!state.online) return {ok:false};
+    try{
+      const res = await fetch(state.settings.gasUrl+'?action=FETCH_ALL', { method:'GET' });
+      const data = await res.json();
+      if(data && Array.isArray(data.requests) && data.requests.length){
+        const incoming = data.requests.map(r=> r.payload ? JSON.parse(r.payload) : r).filter(r=>r&&r.trackingId);
+        if(incoming.length){ state.requests = incoming; Store.persist(); }
+      }
+      return {ok:true};
+    }catch(e){ return {ok:false, error:e.message}; }
+  }
+};
+
+/* ===========================================================================
+   التدقيق الذكي البديل (يعمل بلا إنترنت) — مطابق لمنطق المنظومة
+   =========================================================================== */
+function heuristicAudit(category, title, description, docs){
+  const missing=[]; const lower=((title||'')+' '+(description||''));
+  const has = kw => docs.some(d=> (d.name||'').includes(kw));
+  if(/رعاية|اجتماعي/.test(category)){
+    if(!(has('تقرير')||has('عجز')||has('طبي'))) missing.push('تقرير اللجنة الطبية الاستشارية لبيان نسبة العجز (صادر من دائرة الصحة)');
+    if(!(has('تقاعد')||has('راتب'))) missing.push('تأييد عدم وجود راتب تقاعدي صادر من هيئة التقاعد الوطنية / منصة أور');
+    if(!has('سكن')) missing.push('بطاقة السكن المحدثة مصدقة من مكتب المعلومات');
+  } else if(/علاج|صحة/.test(category)){
+    if(!(has('إخلاء')||has('مركزية'))) missing.push('قرار اللجنة الطبية الاستشارية المركزية للإخلاء والاستقدام الطبي');
+    if(!has('جواز')) missing.push('جواز سفر نافذ للمريض والمرافق');
+  } else if(/شهداء|جرحى/.test(category)){
+    if(!(has('قسام')||has('إرث'))) missing.push('قسام شرعي حديث مصدق من محكمة الأحوال الشخصية');
+    if(!(has('قرار')||has('مؤسسة'))) missing.push('قرار لجنة المصادقة النهائي الصادر من مؤسسة الشهداء');
+  } else if(/أرض|إعمار|بلدي/.test(category)){
+    if(!(has('سكن')||has('تأييد'))) missing.push('تأييد البلدية بعدم استلام قطعة أرض سابقاً');
+  }
+  if(!(has('وطنية')||has('هوية')||has('موحدة'))) missing.push('البطاقة الوطنية الموحدة (وجه وظهر واضحة)');
+  const completeness = Math.max(20, Math.min(100, Math.round(100 - missing.length*25)));
+  return {
+    summary:`تم تدقيق المعاملة وفق الضوابط والتعليمات الوزارية النافذة لسنة 2026. الحالة: ${completeness>=80?'جاهزة للإحالة':'تحتاج استكمال مستمسكات'}.`,
+    completenessRate: completeness, missingDocsSummary: missing,
+    priorityReason: /عاجل|طفل|وفاة|عجز/.test(lower)?'حالة إنسانية ملحة تتطلب تدخلاً سريعاً':'إجراءات معاملة إدارية روتينية',
+    suggestedAction: missing.length?'مراسلة المستفيد عبر واتساب لتزويدنا بالمستمسكات الناقصة فوراً':'إصدار كتاب رسمي وتوقيعه من الجهة المختصة وإحالته للجهة المعنية',
+    targetDirectorate: /رعاية/.test(category)?'هيئة الحماية الاجتماعية / وزارة العمل': /صحة/.test(category)?'دائرة العمليات والخدمات الطبية / وزارة الصحة': /شهداء/.test(category)?'مؤسسة الشهداء':'الجهة المعنية ذات الاختصاص'
+  };
+}
+function slaInfo(submittedAt, status){
+  const done = status==='منجز وموافق عليه'||status==='معتذر عنه';
+  const d = new Date((submittedAt||'').replace(' ','T')); const days = Math.floor((Date.now()-d.getTime())/864e5);
+  return { days: isNaN(days)?0:days, isOverdue: !done && days>7 };
+}
+function overdueCount(){ return state.requests.filter(r=>slaInfo(r.submittedAt,r.status).isOverdue).length; }
+
+/* ===========================================================================
+   طبقة الذكاء الاصطناعي (Gemini / Claude) — مساعد يبحث ويفرز وينفّذ الأوامر
+   =========================================================================== */
+const AI = {
+  ready(){ const s=state.settings; return s.aiProvider==='gemini' ? !!s.geminiKey : !!s.claudeKey; },
+  dataSnapshot(){
+    return state.requests.map(r=>({ رمز:r.trackingId, مواطن:r.citizenName, هاتف:r.phone, محافظة:r.governorate, قطاع:r.category, وزارة:r.targetMinistry, عنوان:r.title, حالة:r.status, أسبقية:r.urgency, نواقص:(r.aiAnalysis&&r.aiAnalysis.missingDocsSummary)||[], تقديم:r.submittedAt }));
+  },
+  systemPrompt(){
+    return `أنت "مساعد إدارة المعاملات" الذكي داخل منظومة إدارة المعاملات. مهمتك مساعدة الموظف في البحث والفرز وتحليل طلبات المستفيدين وتنفيذ الأوامر داخل البرنامج.
+لديك بيانات المعاملات التالية (JSON): ${JSON.stringify(this.dataSnapshot())}
+أجب دائماً باللغة العربية وبشكل موجز ومهني.
+عندما يطلب المستخدم إجراءً داخل البرنامج، أعد في نهاية ردك كتلة أوامر JSON بين وسمين <ACT> و </ACT> تحتوي مصفوفة "actions". الأنواع المدعومة:
+- {"type":"filter","status":"...","governorate":"...","urgency":"...","category":"...","ministry":"...","q":"نص بحث"} لفرز وعرض المعاملات (استخدم القيم الموجودة فعلاً).
+- {"type":"sort","by":"urgency|date|status"} لترتيب القائمة.
+- {"type":"open","trackingId":"IQ-2026-XXXX"} لفتح تفاصيل معاملة.
+- {"type":"draft_whatsapp","trackingId":"...","kind":"missing_docs|status|approved"} لتوليد رسالة واتساب.
+- {"type":"draft_letter","trackingId":"..."} لتوليد كتاب رسمي.
+- {"type":"audit","trackingId":"..."} لإعادة تدقيق المستمسكات.
+- {"type":"goto","tab":"dashboard|secretary-quick"} للتنقل.
+لا تضع كتلة <ACT> إلا عند الحاجة لإجراء فعلي. لا تختلق بيانات غير موجودة.`;
+  },
+  async ask(messages){
+    const s=state.settings;
+    if(s.aiProvider==='claude') return this._claude(messages);
+    return this._gemini(messages);
+  },
+  // المفاتيح الجديدة AQ. والقديمة AIza تعمل عبر ترويسة x-goog-api-key
+  geminiAuthHeaders(extra){ return Object.assign({'x-goog-api-key':(state.settings.geminiKey||'').trim()}, extra||{}); },
+  _modelVer(n){ const m=String(n).match(/gemini-(\d+(?:\.\d+)?)/); return m?parseFloat(m[1]):0; },
+  // يجلب النماذج الفعلية المتاحة لمفتاحك (تشمل أي نماذج جديدة مثل gemini-3)
+  async geminiListModels(){
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models',{ headers:this.geminiAuthHeaders() });
+    if(!res.ok){ const t=await res.text(); throw new Error('Gemini '+res.status+': '+t.slice(0,160)); }
+    const d=await res.json();
+    return (d.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'))
+      .map(m=>String(m.name).replace('models/',''))
+      .filter(n=>/gemini/i.test(n) && !/(embedding|aqa|imagen|image|tts|audio|live|vision$|learnlm)/i.test(n));
+  },
+  // يختار أفضل نموذج محادثة (يفضّل flash الأحدث)
+  pickGeminiModel(models){
+    const alias=['gemini-flash-latest','gemini-flash-lite-latest'];
+    for(const a of alias){ if(models.includes(a)) return a; }
+    const flash=models.filter(n=>/flash/i.test(n)&&!/thinking|exp|lite/i.test(n)).sort((a,b)=>this._modelVer(b)-this._modelVer(a));
+    if(flash.length) return flash[0];
+    const anyFlash=models.filter(n=>/flash/i.test(n)).sort((a,b)=>this._modelVer(b)-this._modelVer(a));
+    if(anyFlash.length) return anyFlash[0];
+    const proLatest=models.filter(n=>/pro/i.test(n)).sort((a,b)=>this._modelVer(b)-this._modelVer(a));
+    return proLatest[0]||models[0];
+  },
+  async _buildGeminiTryList(){
+    const s=state.settings; const list=[];
+    if(s.geminiModel) list.push(s.geminiModel);
+    try{
+      const avail=await this.geminiListModels();
+      if(avail.length){
+        const best=this.pickGeminiModel(avail); if(!list.includes(best)) list.push(best);
+        avail.filter(n=>/flash/i.test(n)).sort((a,b)=>this._modelVer(b)-this._modelVer(a)).slice(0,4).forEach(n=>{ if(!list.includes(n)) list.push(n); });
+      }
+    }catch(e){ if(/\b(401|403)\b/.test(e.message)) throw new Error('المفتاح مرفوض ('+e.message+') — تأكد من نسخه كاملاً'); }
+    ['gemini-flash-latest','gemini-2.5-flash'].forEach(n=>{ if(!list.includes(n)) list.push(n); });
+    return list;
+  },
+  async _gemini(messages){
+    const s=state.settings;
+    const contents = messages.map(m=>({ role: m.role==='assistant'?'model':'user', parts:[{text:m.content}] }));
+    const body = JSON.stringify({ system_instruction:{parts:[{text:this.systemPrompt()}]}, contents, generationConfig:{temperature:0.4} });
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    const models=await this._buildGeminiTryList(); let lastErr='تعذّر الاتصال بأي نموذج';
+    for(const model of models){
+      for(let attempt=0; attempt<2; attempt++){
+        let res;
+        try{
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+          res = await fetch(url, { method:'POST', headers:this.geminiAuthHeaders({'Content-Type':'application/json'}), body });
+        }catch(e){ lastErr='تعذّر الوصول للشبكة: '+e.message; break; }
+        if(res.status===503||res.status===429){ lastErr=`النموذج ${model} مزدحم حالياً (${res.status})`; await sleep(1200*(attempt+1)); continue; }
+        if(res.status===404){ lastErr=`النموذج ${model} غير متاح لمفتاحك (404)`; break; }
+        if(res.status===400||res.status===401||res.status===403){ const t=await res.text(); throw new Error(`مشكلة في المفتاح أو الطلب (${res.status}): `+t.slice(0,150)); }
+        if(!res.ok){ const t=await res.text(); lastErr='Gemini '+res.status+': '+t.slice(0,150); break; }
+        const d=await res.json();
+        if(model!==s.geminiModel){ state.settings.geminiModel=model; saveSettings(); }
+        return (d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts||[]).map(p=>p.text||'').join('') || 'لا يوجد رد.';
+      }
+    }
+    throw new Error(lastErr+'. إن تكرر 503 فهو ازدحام مؤقت من جوجل على الطبقة المجانية — أعد المحاولة بعد قليل.');
+  },
+  async _claude(messages){
+    const s=state.settings;
+    const res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json','x-api-key':s.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body: JSON.stringify({ model:s.claudeModel||'claude-sonnet-4-5', max_tokens:1024, system:this.systemPrompt(), messages: messages.map(m=>({role:m.role==='assistant'?'assistant':'user', content:m.content})) }) });
+    if(!res.ok){ const t=await res.text(); throw new Error('Claude: '+res.status+' '+t.slice(0,180)); }
+    const d = await res.json();
+    return (d.content||[]).map(b=>b.text||'').join('') || 'لا يوجد رد.';
+  },
+  parseActions(text){
+    const m = text.match(/<ACT>([\s\S]*?)<\/ACT>/);
+    let clean = text.replace(/<ACT>[\s\S]*?<\/ACT>/,'').trim();
+    let actions=[];
+    if(m){ try{ const o=JSON.parse(m[1].trim()); actions = o.actions||o; if(!Array.isArray(actions))actions=[actions]; }catch(e){} }
+    return { text:clean, actions };
+  }
+};
+
+/* =====================  البيانات الأولية (نماذج واقعية)  ===================== */
+const SEED = [
+{ id:'req-1', trackingId:'IQ-2026-4891', citizenName:'حيدر جاسم كاظم الزبيدي', nationalId:'198421094821', phone:'07801458920', governorate:'بغداد', district:'مدينة الصدر - قطاع 42', category:'الرعاية والضمان الاجتماعي', targetMinistry:'وزارة العمل والشؤون الاجتماعية', title:'طلب شمول براتب الإعانة الاجتماعية والمعين المتفرغ لطفل معاق', description:'المعيل الوحيد لأسرة من 5 أفراد، ولديه طفل مصاب بالشلل الدماغي الرباعي بنسبة عجز 100%. يرجى التدخل للشمول براتب الحماية وإصدار ماستر كارد المعين المتفرغ.', urgency:'عاجل جداً', status:'أحيل بكتاب رسمي', submittedAt:'2026-10-24 10:30', updatedAt:'2026-11-02 14:15', officialLetterNumber:'م.ن/2026/1842', officialLetterDate:'2026-11-01', officialReplySummary:'إحالة الطلب إلى هيئة رعاية ذوي الإعاقة مع تأييد الحالة الإنسانية للنظر بالأولوية القصوى.',
+  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة للأب',value:'198421094821',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'بطاقة السكن المحدثة',value:'ص/42/1180',status:'verified',required:true,issuer:'مكتب معلومات الصدر'},{id:'d3',name:'التقرير الطبي للجنة الاستشارية (العجز)',status:'verified',required:true,issuer:'دائرة صحة بغداد الرصافة'},{id:'d4',name:'تأييد عدم وجود راتب أو تقاعد',status:'missing',required:true,issuer:'هيئة التقاعد الوطنية'}],
+  timeline:[{id:'t1',timestamp:'2026-10-24 10:30',title:'استلام المعاملة وتسجيلها',description:'استلام أوراق المستفيد ومنحه رمز التتبع.',actor:'الجهة المستلِمة',status:'completed'},{id:'t2',timestamp:'2026-10-26 11:00',title:'تدقيق المستمسكات وفحص الذكاء الاصطناعي',description:'فحص التقرير الطبي واستخراج نقص تأييد التقاعد.',actor:'وحدة التدقيق القانوني',status:'completed'},{id:'t3',timestamp:'2026-11-01 09:45',title:'صدور كتاب رسمي بتوقيع الجهة المختصة',description:'الكتاب م.ن/2026/1842 موجه إلى وزير العمل.',actor:'الجهة المختصة',status:'completed'},{id:'t4',timestamp:'2026-11-03 13:00',title:'قيد المتابعة لدى هيئة ذوي الإعاقة',description:'متابعة الكتاب مع رئاسة الهيئة.',actor:'معتمد المكتب',status:'current'},{id:'t5',timestamp:'',title:'إصدار بطاقة الماستر كارد والشمول',description:'استلام البطاقة الذكية وصرف المستحقات.',actor:'مصرف الرافدين / الهيئة',status:'pending'}],
+  aiAnalysis:{summary:'حالة إنسانية ملحة لطفل معاق رباعي بنسبة 100%. تستوفي معايير قانون رقم 38 لسنة 2013.',completenessRate:75,missingDocsSummary:['تأييد عدم وجود راتب تقاعدي للأب صادر من هيئة التقاعد'],priorityReason:'عجز طبي حرج وأسرة معدومة الدخل.',suggestedAction:'استعجال هيئة ذوي الإعاقة لإصدار كتاب الإحالة وتخصيص الماستر كارد.',targetDirectorate:'هيئة رعاية ذوي الإعاقة / وزارة العمل'},
+  staffNotes:'تم الاتصال بالمستفيد وإبلاغه بمتابعة الكتاب في الهيئة.', accessAccount:{username:'IQ-2026-4891',accessCode:'IQ4891',generatedAt:'2026-10-24 10:30'} },
+{ id:'req-2', trackingId:'IQ-2026-5219', citizenName:'زينب عمار عبد الحسين الخفاجي', nationalId:'199248102941', phone:'07711233445', governorate:'النجف الأشرف', district:'حي السعد', category:'العلاج واللجان الطبية', targetMinistry:'وزارة الصحة', title:'طلب إحالة للعلاج خارج العراق لحالة ورم دماغي', description:'مريضة بورم دماغي تحتاج إحالة عاجلة للعلاج خارج العراق على نفقة الدولة، وقد صدر قرار اللجنة الطبية الأولية.', urgency:'عاجل جداً', status:'بانتظار مستمسكات', submittedAt:'2026-10-29 09:10', updatedAt:'2026-10-31 12:00',
+  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة',value:'199248102941',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'قرار اللجنة الطبية المركزية للإخلاء',status:'missing',required:true,issuer:'مدينة الطب'},{id:'d3',name:'جواز سفر نافذ للمريضة والمرافق',status:'missing',required:true,issuer:'مديرية الجوازات'}],
+  timeline:[{id:'t1',timestamp:'2026-10-29 09:10',title:'استلام المعاملة',description:'تسجيل الطلب ومنح رمز التتبع.',actor:'الجهة المستلِمة',status:'completed'},{id:'t2',timestamp:'2026-10-31 12:00',title:'تدقيق المستمسكات',description:'تبيّن نقص قرار الإخلاء المركزي وجواز السفر.',actor:'وحدة التدقيق',status:'current'},{id:'t3',timestamp:'',title:'إصدار كتاب رسمي',description:'مخاطبة دائرة العمليات والخدمات الطبية.',actor:'الجهة المختصة',status:'pending'}],
+  aiAnalysis:{summary:'حالة مرضية حرجة تتطلب استكمال قرار الإخلاء الطبي المركزي.',completenessRate:50,missingDocsSummary:['قرار اللجنة الطبية المركزية للإخلاء','جواز سفر نافذ للمريضة والمرافق'],priorityReason:'ورم دماغي — خطر على الحياة.',suggestedAction:'مراسلة المستفيدة لاستكمال قرار الإخلاء وجواز السفر فوراً.',targetDirectorate:'دائرة العمليات والخدمات الطبية / وزارة الصحة'},
+  staffNotes:'', accessAccount:{username:'IQ-2026-5219',accessCode:'IQ5219',generatedAt:'2026-10-29 09:10'} },
+{ id:'req-3', trackingId:'IQ-2026-6104', citizenName:'علي فاضل محمود الدليمي', nationalId:'199510338201', phone:'07901557788', governorate:'الأنبار', district:'الرمادي - التأميم', category:'الإعمار وتخصيص الأراضي', targetMinistry:'وزارة الإعمار والإسكان والبلديات', title:'طلب تخصيص قطعة أرض سكنية ضمن قطع الموظفين', description:'موظف حكومي لا يملك داراً ولم يسبق له الحصول على قطعة أرض، يطلب شموله بتوزيع قطع أراضي الموظفين.', urgency:'متوسط', status:'قيد التدقيق', submittedAt:'2026-11-01 08:45', updatedAt:'2026-11-01 08:45',
+  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'تأييد البلدية بعدم استلام أرض سابقاً',status:'missing',required:true,issuer:'بلدية الرمادي'}],
+  timeline:[{id:'t1',timestamp:'2026-11-01 08:45',title:'استلام المعاملة',description:'تسجيل الطلب ومنح رمز التتبع.',actor:'الجهة المستلِمة',status:'current'}],
+  aiAnalysis:{summary:'طلب إداري روتيني لتخصيص أرض، ينقصه تأييد البلدية.',completenessRate:70,missingDocsSummary:['تأييد البلدية بعدم استلام قطعة أرض سابقاً'],priorityReason:'إجراءات معاملة إدارية روتينية.',suggestedAction:'مراسلة المستفيد لتزويدنا بتأييد البلدية.',targetDirectorate:'دائرة البلديات / وزارة الإعمار'},
+  staffNotes:'', accessAccount:{username:'IQ-2026-6104',accessCode:'IQ6104',generatedAt:'2026-11-01 08:45'} }
+];
+
+/* =========================  تضمين الواجهة والمنطق  ========================= */
+</script>
+<script>
+const SEAL_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCABuAG4DASIAAhEBAxEB/8QAGgAAAwEBAQEAAAAAAAAAAAAAAwQFBgECAP/EADwQAAEDAgQCBwYFAwMFAAAAAAECAxEABAUSITFBUQYTImFxgaEUMpGxwfAjM0JS4RVi0Qck8WNyc4Oi/8QAGQEAAwEBAQAAAAAAAAAAAAAAAgMEAQAF/8QAKBEAAgIBAwMDBAMAAAAAAAAAAQIAEQMSITEEEzJBUaEiQmGBFDOx/9oADAMBAAIRAxEAPwDONOILJW6HFOFxQBDigAAdK+BRPuuTufxlf5oLf5QHDrFGfOjCCryrp5RM+KWwPdcP/tV/mgq6obIc0/6qqOvY12ysbi+cPUpSlsGFOr0Sn/J7hWEgbmaoLGhEFFv9i5/8hrrbHXn8Bh90/wBhUr5VomsMtbeSlr2h0R23h2fJO0eM0dxzM2At0pAUNuymI4cPXWknMPSVL0x+4zMHCbw7WboJ/cuPmaC5h10gGbN8/wDaSr5VptFKlIKgdCoAnjpt5Us6pABklsmSZMEnhvrQd5o3+MvvMo6nKrKpC0niCSDQVAa6H4mtVcdtASSHBA7LiZB8JG/zqbd4agqUGvwljcHVJ8DuKYuYesBunYeJuRFRyPxoKok6etMvtLaWUuJINLLpsRxzPBjl614ICkq02I+tezQzACz3j610ITVMryoGmmdXzoyTPGkmVdgAj9SvnTlkyu7uEW6DlCtVKA91PE/TxiuJoWYjSSaEdw2zN4S66Sm1SYJGhcI/SPqasLUlKUJWlKGke4hOyOX08ZpdSkBoBKQhlCShKCqMgj/kzXrCrC+6Q4i21YqUkpUFZlDRsA+8rvOsD7MrMW3PE9DGgxihzNJhfRe5vGU3WJOex22gzqHbXJ00OiRtv6Vb/peHYYxbrTatt3RfCVF4dcVJBg9o6bHN5HvrljfrUblnGMQWx7Mz1DjOgkzo4k7zEVj8a6Z2DLr3sXtd84UhIublzKUEGZRA04bAbVOpZ9llLUm7TQ3GJIuWVBh90OCUKCELSAsBaSAcoH6kn4aUTGbq1bXlu7lDalhJ6t1uBlBMwSNzrJ8IrMJxHpNeYf1LScPFu4PypLylE69oiTm46waiHpPiWFOrtrmzYzA9tPaSSecyZ86ztFjQm90ILb/DK+JW+FPOENFpl11whAYVrBUQklIBEGJmomI2b2HqyPgFkq7TqdleM7U/heL4Te3XWdS5bXQ7Q7RA79QYg8Qa+vbS9xRq8Zt386G5WXFgACdkj1rLKNR+YwAOuofEzz7CXWwlYBSdo0KKh3TCmHClXiCOIqqhamFBlYJhQGVStUqHA/Q1y7ZDzeSNSJSd4P8AIqxG0n8SPIgcfmQlUKdF+I+tFdBSYIgjhQNkq8R9aokomgaX+HHJR+dWsJysWvWrUUruFaHjlBgDzM1nkrOQ8dTFWro5HGWEmOoa013Vt9+NLyegnYRRLRzELkKUlkZZ3nbMnhx2nXyrrOJ4pZ2a3bV9dox1oSrJ2S4ojN4nT4AilbdCX7hDW6VOZTJ3QNB8QCPOnMevEeyNphBceJIJROVAgaTtMDUDhvwpQqwtSg6qL3VSp0lx24x67S1gtk467bthLr7SSpSiB8I31rEvpW24pDqFJcT7yVggg981r+iD79vhTrls8tpRUpWZBiSCAK1jo6P4+2E4zboTdIJTmAKSuOIIpQyjCdIG0Y2Bs6h7/XpMz/pslNmxfYgtsEKIbbG2sdo+oFZ7pmrPjSnYgLSDp999ba8Xh+EWYtrW5bLTaYQhtB3MzMmeO/d8Y5bwXEn23b55C2wr8uCCB4g0sZKzdytpSekyHptNfuYuyZvXXFKsGnlqSO0WkkwORq1cdInDgC7EN+yXLKgVZZBWZideNafE8VtvZEYdgqEsWiYJU0MoXrH+awXSDs3iVcSk767E05XGZhYk5xt0+MkGCeU+p2LvtBSAetSNSk67+XoaIi4/2ys6gnIYUoDUnnTDJTeWKkpCU5k5hAjKpM8PMmPSpiMqTCdAQCUnh9g+lGKO3tM3Xe7uCxFAKw6n3VifOppOivEfWqjoKsPKVCFNr9Ps1LOyh3j609OKiHH1X7yuwZcQDxWBx51od3ipSUqXmkHiB9azDSgghXJU+tXHLhDbykEEx2wSdhPClZQbE3BVG56w1wpXmKFdhk5jO0gCT3dqO6aF0hcm7bSDollPiZ1k8fjr4bVzDSlDqUDsqLa0qjTX7TxoONlXWsOmIW3Gh4g6/wDPjWL/AGwnB7Jmk6OuBGCiZg5j/wDdU7dtq7xNq1uXC206+UKWNSkEiI84qFhDuXC2kzrl+ZNO20XN4hpSikLXIIOszP0qR/Mn8z0MJKopHNCa/E+i3R63Wbd3HV9aAZQnISCOHjWdxHolgrdxdNt4o+4q1QVr0REjceNQOknTfpfgl0toXTPUqMoX7I2d+Zy715w3GukmO4fcuYtcpNstPupYQgq4ySADrH3pVZGMLqhDretLaS/xGGlkMInggad+aonSLV5o9yh61T60KQCDII3HEZqkY+ZLR710nD5iJ6nfEZ9g7uRkKJICXdwJPw+VAykPhsoyhJUCCZjfT0pjBklLKFEwCsqBkaAfz9KVBSXQopgQo8zB9d1U77mk4vQsO+k9S6IATl/moJ2V4j61ZU71lq+YKQkZYmY1qKTorxH1pmL1i8tWI8k6a8apq/GbYdhR7BSvLMjhPxqQk99UMPdmWpgntJnnxHw+VbkG1xeLnSfWMBbjD6DlKspC5Bg8JHx+dN4ghDlo4e2lvL16FLTEwICeUanagvpS4gFMFQ1KlL3PL77qQeedDKm8zircGFNq0g8xSQNRBEoYhQQeDLFo+ljDW1r0QlsEmn+i77l3eXV6QpNu0nK2mBImJPjHzqT0esHsZuW5baXbW6QC2pcBRjc1rv6evD2wzZ2oS1mJIaVmBJ0JIOvOkZdK2PUyjGWeiPEfMl43kurgtuhKkpG28Gf4r3ZOJ9jLc+6SNPeI5+tAxG0uwtbzSFOrURLRQQTz1mO+iW1q6y2SVKXJBBS1lGmn6jSyPpjr3kBVybK9dtrj8sqHVGNEgmfhQ8WAcNuFGAp2J5A1cusOt3myq5YQp0phJUsyB5aD1rKP9bbqTbXKesyLzJGbfcAeFUYiGII5k2W1UhuDxKz0W9qoDrApSerTCYEARmnwHCpwStSFLKcpBgAanST84+FdC3rg5H3lKdEanZAn4fzApkJBAQiAoGAJnQUfjA89xxE7qWMPQ2ffWolXj9xUmdD4im8SuA6+Qg9hPZTSc6HxFPQUJO5ttpStmg6y8JGcQU6TO9CbWUqSpJggyCKPhWfOspCidJAJ1HKiX1ouA82FLUdXNIHjrBG1ZqpiDMKEqCI2y6l5HWJIBHvJiQDzrrjec5h2Y4mIP3z8qkMXC2lhSDBqqw+2+AW4Dg/QT8qWyldxHY3D7Hme8NvF4VeFbaVHMO0jYHv+9K0SOlDCmoz9S5w66Qk+e1Z1woAlQBnSNgk/TxoS7dOUoSspUdJAmfUes0psaObaOV2QUs0bOIBAlq7ZUtSiT2wUpEzGkT8KWu71DjpVdYgz1ZAloEQO8SZqKGsjSW4ZWEkKkzrEcgeVeFMpcZSEqQjKuRl1jfhpz38KEYlu4XcNcSo/izOgaK3OAMQD5n6TUgBVxcOOahZMdYrQJ7h9z4UTIhBzyXIEnWPLx14zREpKjlCT/bpGWjVVTxgsWyeU8QAMoToYmQDJ5fxw+YcQuE2zRZQZdWO0f2jlXbq9btUlDBC3uK+CfCo5zvOaSpaj5mmql7mJd6+kTraC66lAMFRiTwr1epSh9xLcZAREDup+3tyw0CnMVuABUDumNPqeFIXs+0OSZMgk8zG9MDW0AppXeOYZClrBnwBid+VPuLAT2iCYzBvINeZ25+FRmnVtzkUBPNINezd3BIJdEj+wa99CyEm5q5Aq1Gbm1znrGIzH9AAAPePsUkFKQogyFA6g0X2y5MAvDT+wa+POhvOuvABbgOs+4BRKGHMW+g7iNtYkoDK8kODmd/jTjd9aq/WtskcRNQ8p/d6V9lP7vSsONTNXKwl1K2/0XLUceHzrqlshQWq5QI4JBNQYP7vSuQf3elZ2h7w+8faWnMQtWwcgW4eZMTSFziLzwyCEI/anSkyDz9K4QefpRBFEBsjNPaG3HlENpKiNTHCqFuwi30IDilEdsJGh5CfM8KTRdPoR1aXBliIyCu+13An8SZ3JSCT41jBjCQqspJAImcyVaEJ0AjeD4xUm70eWAZ1GvPSvXtL0QHNDv2RrQXFFclRknuiuVSDNdww2n//Z";
+const GAS_CODE = "/**\n * Code.gs \u2014 \u062e\u0644\u0641\u064a\u0629 \u0643\u0648\u0643\u0644 \u0633\u0643\u0631\u0628\u062a \u0644\u0645\u0646\u0638\u0648\u0645\u0629 \u0627\u0644\u0646\u0627\u0626\u0628 \u00b7 \u0645\u0643\u062a\u0628 \u0634\u0624\u0648\u0646 \u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646\n * \u0645\u062c\u0644\u0633 \u0627\u0644\u0646\u0648\u0627\u0628 \u0627\u0644\u0639\u0631\u0627\u0642\u064a \u2014 \u0625\u0639\u062f\u0627\u062f: \u0623.\u0645. \u0623\u062d\u0645\u062f \u0627\u0644\u0631\u0628\u064a\u0639\u064a \u0644\u0644\u062d\u0644\u0648\u0644 \u0627\u0644\u0647\u0646\u062f\u0633\u064a\u0629\n *\n * \u0627\u0644\u0648\u0638\u064a\u0641\u0629: \u062a\u062e\u0632\u064a\u0646 \u0648\u0645\u0632\u0627\u0645\u0646\u0629 \u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646 \u0641\u064a Google Sheets (\u064a\u0639\u0645\u0644 \u0643\u0642\u0627\u0639\u062f\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0633\u062d\u0627\u0628\u064a\u0629).\n * - doPost  : \u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642 (SYNC_ALL / SAVE_REQUEST).\n * - doGet   : \u0625\u0631\u062c\u0627\u0639 \u0643\u0644 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0644\u0644\u062a\u0637\u0628\u064a\u0642 (FETCH_ALL).\n * - \u064a\u062e\u0632\u0651\u0646 \u0627\u0644\u0623\u0639\u0645\u062f\u0629 \u0627\u0644\u0645\u0642\u0631\u0648\u0621\u0629 + \u0639\u0645\u0648\u062f JSON \u0643\u0627\u0645\u0644 (col 17) \u0644\u0644\u062d\u0641\u0627\u0638 \u0639\u0644\u0649 \u0643\u0644 \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644.\n * - \u0648\u0631\u0642\u0629 \"\u0627\u0644\u062a\u0631\u0627\u062e\u064a\u0635\" \u0644\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0623\u062c\u0647\u0632\u0629 \u0627\u0644\u0645\u0641\u0639\u0651\u0644\u0629 (\u062a\u062d\u0643\u0651\u0645 \u0645\u0631\u0643\u0632\u064a \u0627\u062e\u062a\u064a\u0627\u0631\u064a).\n *\n * \u062e\u0637\u0648\u0627\u062a \u0627\u0644\u0646\u0634\u0631:\n * 1) sheets.google.com \u2190 \u062c\u062f\u0648\u0644 \u062c\u062f\u064a\u062f.\n * 2) \u0627\u0644\u0625\u0636\u0627\u0641\u0627\u062a (Extensions) \u2190 Apps Script\u060c \u0627\u0644\u0635\u0642 \u0647\u0630\u0627 \u0627\u0644\u0643\u0648\u062f\u060c \u0627\u062d\u0641\u0638.\n * 3) Deploy \u2190 New deployment \u2190 Web app \u2190 Who has access: Anyone.\n * 4) \u0627\u0646\u0633\u062e \u0631\u0627\u0628\u0637 (Web App URL) \u0648\u0636\u0639\u0647 \u0641\u064a \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0637\u0628\u064a\u0642.\n */\n\nvar SHEET_NAME = \"\u0637\u0644\u0628\u0627\u062a_\u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646\";\nvar LIC_SHEET  = \"\u0627\u0644\u062a\u0631\u0627\u062e\u064a\u0635\";\nvar HEADERS = [\n  \"\u0631\u0645\u0632 \u0627\u0644\u062a\u062a\u0628\u0639\",\"\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0627\u0637\u0646\",\"\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641\",\"\u0627\u0644\u0645\u062d\u0627\u0641\u0638\u0629\",\"\u0627\u0644\u0642\u0636\u0627\u0621/\u0627\u0644\u0645\u062d\u0644\u0629\",\"\u0627\u0644\u0642\u0637\u0627\u0639\",\n  \"\u0627\u0644\u0648\u0632\u0627\u0631\u0629 \u0627\u0644\u0645\u0639\u0646\u064a\u0629\",\"\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0637\u0644\u0628\",\"\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629\",\"\u062f\u0631\u062c\u0629 \u0627\u0644\u0623\u0633\u0628\u0642\u064a\u0629\",\"\u0627\u0644\u0645\u0633\u062a\u0645\u0633\u0643\u0627\u062a \u0627\u0644\u0646\u0627\u0642\u0635\u0629\",\n  \"\u0631\u0642\u0645 \u0627\u0644\u0643\u062a\u0627\u0628 \u0627\u0644\u0646\u064a\u0627\u0628\u064a\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0643\u062a\u0627\u0628\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062a\u0642\u062f\u064a\u0645\",\"\u0622\u062e\u0631 \u062a\u062d\u062f\u064a\u062b\",\"\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0627\u0644\u0645\u0643\u062a\u0628\",\"JSON_DATA\"\n];\n\nfunction setupSheet() {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);\n  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);\n  sheet.getRange(1, 1, 1, HEADERS.length)\n    .setBackground(\"#064e3b\").setFontColor(\"#ffffff\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  sheet.setFrozenRows(1);\n  // \u0625\u062e\u0641\u0627\u0621 \u0639\u0645\u0648\u062f JSON\n  sheet.hideColumns(17);\n\n  var lic = ss.getSheetByName(LIC_SHEET);\n  if (!lic) {\n    lic = ss.insertSheet(LIC_SHEET);\n    lic.getRange(1,1,1,5).setValues([[\"\u0631\u0645\u0632 \u0627\u0644\u062c\u0647\u0627\u0632\",\"\u0627\u0633\u0645 \u0627\u0644\u0645\u0643\u062a\u0628/\u0627\u0644\u0645\u0648\u0638\u0641\",\"\u0627\u0644\u062f\u0648\u0631\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062a\u0641\u0639\u064a\u0644\",\"\u0627\u0644\u062d\u0627\u0644\u0629\"]]);\n    lic.getRange(1,1,1,5).setBackground(\"#0f172a\").setFontColor(\"#fcd34d\").setFontWeight(\"bold\");\n    lic.setFrozenRows(1);\n  }\n  return \"\u062a\u0645 \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u062c\u062f\u0627\u0648\u0644 \u0628\u0646\u062c\u0627\u062d\";\n}\n\nfunction rowFromRequest(r) {\n  var missing = (r.aiAnalysis && r.aiAnalysis.missingDocsSummary) ? r.aiAnalysis.missingDocsSummary.join(\"\u060c \") : \"\";\n  return [\n    r.trackingId||\"\", r.citizenName||\"\", r.phone||\"\", r.governorate||\"\", r.district||\"\", r.category||\"\",\n    r.targetMinistry||\"\", r.title||\"\", r.status||\"\", r.urgency||\"\", missing,\n    r.officialLetterNumber||\"\", r.officialLetterDate||\"\", r.submittedAt||\"\", r.updatedAt||\"\", r.staffNotes||\"\",\n    JSON.stringify(r)\n  ];\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(20000);\n    var data = JSON.parse(e.postData.contents);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var sheet = ss.getSheetByName(SHEET_NAME);\n    if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n    if (data.action === \"SYNC_ALL\" && Array.isArray(data.requests)) {\n      var last = sheet.getLastRow();\n      if (last > 1) sheet.getRange(2, 1, last - 1, HEADERS.length).clearContent();\n      var rows = data.requests.map(rowFromRequest);\n      if (rows.length) sheet.getRange(2, 1, rows.length, HEADERS.length).setValues(rows);\n      return out({ status:\"success\", message:\"\u062a\u0645\u062a \u0645\u0632\u0627\u0645\u0646\u0629 \"+rows.length+\" \u0645\u0639\u0627\u0645\u0644\u0629\", syncedCount: rows.length });\n    }\n\n    if (data.action === \"SAVE_REQUEST\" && data.request) {\n      var r = data.request, foundRow = -1, last = sheet.getLastRow();\n      if (last > 1) {\n        var ids = sheet.getRange(2, 1, last - 1, 1).getValues();\n        for (var i = 0; i < ids.length; i++) if (ids[i][0] === r.trackingId) { foundRow = i + 2; break; }\n      }\n      var row = rowFromRequest(r);\n      if (foundRow > 0) sheet.getRange(foundRow, 1, 1, HEADERS.length).setValues([row]);\n      else sheet.appendRow(row);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062d\u0641\u0638 \u0627\u0644\u0637\u0644\u0628\", trackingId: r.trackingId });\n    }\n\n    if (data.action === \"REGISTER_LICENSE\" && data.device) {\n      var lic = ss.getSheetByName(LIC_SHEET) || (setupSheet(), ss.getSheetByName(LIC_SHEET));\n      lic.appendRow([data.device, data.office||\"\", data.role||\"\", new Date().toISOString(), \"\u0645\u0641\u0639\u0651\u0644\"]);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062c\u0647\u0627\u0632\" });\n    }\n\n    return out({ status:\"error\", message:\"\u0625\u062c\u0631\u0627\u0621 \u063a\u064a\u0631 \u0645\u0639\u0631\u0648\u0641\" });\n  } catch (err) {\n    return out({ status:\"error\", message: String(err) });\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction doGet(e) {\n  var action = (e && e.parameter && e.parameter.action) || \"FETCH_ALL\";\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n  if (action === \"CHECK_LICENSE\") {\n    var dc = e.parameter.device || \"\";\n    var lic = ss.getSheetByName(LIC_SHEET);\n    var status = \"unknown\";\n    if (lic && lic.getLastRow() > 1) {\n      var vals = lic.getRange(2,1,lic.getLastRow()-1,5).getValues();\n      for (var i=0;i<vals.length;i++) if (vals[i][0]===dc) status = String(vals[i][4]||\"\u0645\u0641\u0639\u0651\u0644\");\n    }\n    return out({ status:\"success\", device:dc, licenseStatus:status });\n  }\n\n  var last = sheet.getLastRow();\n  if (last <= 1) return out({ requests: [] });\n  var data = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();\n  var requests = data.map(function(row) {\n    var json = row[16];\n    if (json) { try { return { payload: json }; } catch(x){} }\n    return {\n      trackingId: row[0], citizenName: row[1], phone: row[2], governorate: row[3], district: row[4],\n      category: row[5], targetMinistry: row[6], title: row[7], status: row[8], urgency: row[9],\n      missingDocs: row[10], officialLetterNumber: row[11], officialLetterDate: row[12],\n      submittedAt: row[13], updatedAt: row[14], staffNotes: row[15]\n    };\n  });\n  return out({ requests: requests });\n}\n\nfunction out(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n";
+
+"use strict";
+/* ===========================================================================
+   منطق الواجهة والتفاعل — منظومة إدارة المعاملات
+   =========================================================================== */
+let MODAL = null; // عنصر النافذة الحالية
+
+function statusBadge(s){ return `<span class="st ${STATUS_CLASS[s]||'st-recv'}">${esc(s)}</span>`; }
+function urgBadge(u){ const c=u==='عاجل جداً'?'urg-high':u==='متوسط'?'urg-mid':'urg-low'; return `<span class="st ${c}">${esc(u)}</span>`; }
+
+/* --------------------- بوابة التفعيل (الترخيص السحابي الموحّد) --------------------- */
+async function renderActivation(ev){
+  const dc = await LIC.deviceId();
+  const st = ev && ev.state;
+  const reason = ev && (ev.reason || (st==='offline-expired' ? 'انتهت مهلة العمل دون اتصال — اتصل بالإنترنت لتجديد الترخيص' : st==='suspended' ? 'تم إيقاف هذا الترخيص من قبل الإدارة' : st==='reset' ? 'أُعيد تعيين هذا الجهاز — فعّله من جديد' : st==='expired' ? 'انتهت صلاحية الاشتراك' : ''));
+  const officeDefault = state.settings.officeName || APP.office;
+  $('#app').innerHTML = `
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px" class="hero">
+    <div class="card" style="max-width:500px;width:100%;overflow:hidden">
+      <div style="background:var(--em-950);color:#fff;padding:22px;text-align:center">
+        <div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(56)}</div>
+        <div class="b txt-lg">${esc(APP.name)}</div>
+        <div class="txt-sm" style="color:var(--em-200);margin-top:4px">الجهة · تفعيل الترخيص السحابي</div>
+      </div>
+      <div class="pad5">
+        ${reason?`<div class="chip urg-high" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px">${icon('alert')} ${esc(reason)}</div>`:''}
+        <p class="txt-sm muted mb3" style="line-height:1.8">فعّل البرنامج عبر <b>رابط التفعيل</b> الذي يصلك على واتساب من الإدارة. يكفي لصق الرابط كاملاً هنا، أو افتح الرابط مباشرة فيُفعّل تلقائياً.</p>
+        <div class="field">
+          <label>رابط / رمز التفعيل (من رسالة واتساب)</label>
+          <textarea id="actKey" rows="3" class="mono txt-xs" placeholder="https://…/#go=NBL1.…  أو  NBL1.…"></textarea>
+        </div>
+        <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px;margin-bottom:12px" id="actApply">${icon('key')} تفعيل هذا الجهاز الآن</button>
+        <div class="field">
+          <label>اسم المكتب (لطلب الترخيص)</label>
+          <input id="actOffice" value="${esc(officeDefault)}" placeholder="مثال: مكتب النائب فلان - شؤون المستفيدين">
+        </div>
+        <div class="flex gap2" style="margin-bottom:6px">
+          <input class="mono txt-xs" id="actDev" value="${dc}" readonly title="رمز هذا الجهاز">
+          <button class="btn btn-gray shrink0" onclick="navigator.clipboard.writeText('${dc}');toast('نُسخ رمز الجهاز')">${icon('copy')}</button>
+        </div>
+        <button class="btn btn-wa" style="width:100%;justify-content:center;padding:11px" id="actWa">${icon('wa')} طلب الترخيص من الإدارة عبر واتساب</button>
+        <div class="center mt4 txt-xs muted2">${esc(APP.brandLine)} · ${APP.masterWhatsApp.replace('964','0')} · الإصدار ${APP.version}</div>
+        <p class="center txt-xs muted2 mt2" style="line-height:1.7">الترخيص سحابي: يعمل بدون إنترنت 30 يوماً ثم 7 أيام سماح، ويتجدد تلقائياً. تُدار كل التراخيص من لوحة التحكم الموحّدة.</p>
+      </div>
+    </div>
+  </div>`;
+  $('#actWa').onclick = ()=>{
+    const office = $('#actOffice').value.trim()||APP.office;
+    const msg = `طلب ترخيص ${APP.name}\n——————————\nاسم المكتب: ${office}\nرمز الجهاز: ${dc}\nالإصدار: ${APP.version}\n——————————\nيرجى إصدار رابط التفعيل من لوحة التراخيص (منتج: منظومة إدارة المعاملات).`;
+    window.open(waLink(APP.masterWhatsApp, msg),'_blank');
+  };
+  $('#actApply').onclick = async ()=>{
+    const val = $('#actKey').value.trim();
+    if(!val){ toast('الصق رابط أو رمز التفعيل', false); return; }
+    const btn=$('#actApply'); btn.disabled=true; btn.innerHTML='جارِ التفعيل...';
+    try{
+      const r = await LIC.activate(val);
+      if(r.state==='active' || r.state==='grace'){ toast('تم تفعيل البرنامج بنجاح'); boot(); }
+      else { toast(r.reason||'تعذّر التفعيل', false); btn.disabled=false; btn.innerHTML=icon('key')+' تفعيل هذا الجهاز الآن'; }
+    }catch(e){ toast(e.message, false); btn.disabled=false; btn.innerHTML=icon('key')+' تفعيل هذا الجهاز الآن'; }
+  };
+}
+
+/* ------------------------------- الرأس (Header) ------------------------------- */
+function renderHeader(){
+  const oc = overdueCount();
+  const office = state.mode==='office';
+  return `
+  <header class="top no-print">
+    <div class="wrapmax flex items-center justify-between gap3" style="height:62px">
+      <div class="flex items-center gap3 shrink0">
+        ${brandMark(40)}
+        <div class="flex col">
+          <span class="b" style="font-size:14px">${esc(state.settings.officeName||APP.office)}</span>
+          <span class="txt-xs em sb">منظومة إدارة المعاملات والطلبات</span>
+        </div>
+      </div>
+
+      <div class="switch shrink0">
+        <button class="${!office?'on-em':''}" onclick="setMode('citizen')">${icon('user')} واجهة المستفيد</button>
+        <button class="${office?'on-dark':''}" onclick="setMode('office')">${icon('shield')} واجهة المكتب ${state.session?'<span class=dot></span>':''}</button>
+      </div>
+
+      ${office? `<nav class="flex items-center gap4 hide-sm txt-sm sb">
+        <a class="navlink ${state.tab==='secretary-quick'?'active':''}" onclick="setTab('secretary-quick')">${icon('shield')} لوحة التحديث</a>
+        <a class="navlink ${state.tab==='dashboard'?'active':''}" onclick="setTab('dashboard')">${icon('dash')} سجل الطلبات</a>
+        <a class="navlink ${state.tab==='whatsapp-hub'?'active':''}" onclick="setTab('whatsapp-hub')">${icon('wa')} واتساب</a>
+        <a class="navlink ${state.tab==='letters'?'active':''}" onclick="setTab('letters')">${icon('file')} الكتب الرسمية</a>
+      </nav>`
+      : `<nav class="flex items-center gap4 hide-sm txt-sm sb">
+        <a class="navlink ${state.tab==='citizen-portal'?'active':''}" onclick="setTab('citizen-portal')">${icon('search')} أين وصل طلبي؟</a>
+        <a class="navlink" onclick="openNewRequest()">${icon('plus')} تقديم طلب جديد</a>
+      </nav>`}
+
+      <div class="flex items-center gap2 shrink0">
+        <button class="bell" title="إشعارات المهل القانونية" onclick="openNotifications()">${icon('bell')}${oc>0?`<span class="cnt mono">${oc}</span>`:''}</button>
+        ${office? `
+          <button class="btn btn-em btn-sm" onclick="openScanner()" title="مسح باركود رمز المعاملة بالكاميرا">${icon('cam')}<span class="hide-sm">مسح باركود</span></button>
+          <button class="btn btn-white btn-sm" onclick="openSettings()" title="الإعدادات والذكاء الاصطناعي">${icon('cog')}</button>
+          <button class="btn btn-sm ${state.settings.gasUrl?'btn-gray':''}" style="${state.settings.gasUrl?'background:var(--em-50);border-color:var(--em-300);color:var(--em-900)':'background:var(--amber-50);border:1px solid var(--amber-200);color:var(--amber-900)'}" onclick="openGas()" title="ربط كوكل سكربت">${icon('cloud')}<span class="hide-sm">${state.settings.gasUrl?'كوكل متصل':'ربط كوكل'}</span></button>
+          ${state.session?`<button class="x" onclick="logout()" title="خروج">${icon('logout')}</button>`:''}
+        ` : `<button class="btn btn-em btn-sm" onclick="openNewRequest()">${icon('plus')} تقديم طلب</button>`}
+      </div>
+    </div>
+  </header>`;
+}
+
+/* ------------------------------- بوابة المستفيد ------------------------------- */
+let citizenResult = null;
+function renderCitizen(){
+  return `
+  <div class="wrapmax" style="padding:22px 16px">
+    <div class="card" style="overflow:hidden;margin-bottom:18px">
+      <div class="hero pad6" style="text-align:center">
+        <div style="display:flex;justify-content:center;margin-bottom:12px">${brandMark(60)}</div>
+        <div class="txt-2xl b">خدمة متابعة المعاملات والطلبات</div>
+        <div class="txt-sm mt2" style="color:var(--em-200)">تابع طلبك ومناشدتك لدى ${esc(state.settings.officeName||APP.office)} بكل شفافية — متاح على مدار الساعة</div>
+      </div>
+      <div class="pad5">
+        <label>ادخل رمز المعاملة أو رقم الهاتف لمتابعة طلبك</label>
+        <div class="flex gap2 wrap">
+          <input id="trackInput" class="grow" placeholder="مثال: IQ-2026-4891 أو 07801458920" style="min-width:200px">
+          <button class="btn btn-em" onclick="doTrack()">${icon('search')} استعلام</button>
+          <button class="btn btn-gray" onclick="openScanner()" title="مسح باركود بالكاميرا">${icon('cam')} مسح باركود</button>
+        </div>
+        <div id="trackResult" class="mt4"></div>
+      </div>
+    </div>
+    <div class="grid g3 gap4">
+      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('plus')} تقديم طلب جديد</div><p class="txt-sm muted">قدّم مناشدتك أو معاملتك إلكترونياً واحصل على رمز متابعة فوري.</p><button class="btn btn-em btn-sm mt3" onclick="openNewRequest()">ابدأ التقديم</button></div>
+      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('barcode')} رمز الباركود</div><p class="txt-sm muted">كل معاملة لها باركود يُطبع على الوصل، امسحه للوصول السريع لحالتها.</p></div>
+      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('wa')} تواصل مباشر</div><p class="txt-sm muted">يصلك إشعار واتساب بكل تحديث على معاملتك من المكتب.</p></div>
+    </div>
+  </div>`;
+}
+function doTrack(){
+  const v = $('#trackInput').value.trim();
+  const r = Store.byTracking(v);
+  const box = $('#trackResult');
+  if(!r){ box.innerHTML=`<div class="chip urg-high" style="width:100%;justify-content:center;padding:10px">${icon('alert')} لم يتم العثور على معاملة بهذا الرمز. تأكد من الرمز أو راجع المكتب.</div>`; return; }
+  const sla = slaInfo(r.submittedAt, r.status);
+  box.innerHTML = `
+  <div class="card pad5" style="border-color:var(--em-300);background:var(--em-50)">
+    <div class="flex items-center justify-between wrap gap2 mb3">
+      <div><div class="b txt-lg">${esc(r.citizenName)}</div><div class="txt-sm muted">${esc(r.title)}</div></div>
+      <div class="center">${statusBadge(r.status)}<div class="txt-xs muted mt1">منذ ${sla.days} يوم</div></div>
+    </div>
+    <div class="barcode-box mb3">${Barcode(r.trackingId)}</div>
+    <div class="grid g2 gap2 txt-sm">
+      <div class="kv"><span class="muted">رمز المعاملة</span><span class="mono b">${esc(r.trackingId)}</span></div>
+      <div class="kv"><span class="muted">المحافظة</span><span class="sb">${esc(r.governorate)}</span></div>
+      <div class="kv"><span class="muted">الجهة المعنية</span><span class="sb">${esc(r.targetMinistry)}</span></div>
+      <div class="kv"><span class="muted">الأسبقية</span>${urgBadge(r.urgency)}</div>
+    </div>
+    ${(r.documents||[]).length?`<div class="mt3 b txt-sm mb2">المستمسكات:</div>
+    <div class="card pad3">${(r.documents||[]).map(d=>`<div class="kv"><span>${d.status==='missing'?'🔴':d.status==='verified'?'🟢':'🟡'} ${esc(d.name)}</span><span class="mono sb">${esc(d.value||'')}</span></div>`).join('')}</div>`:''}
+    <div class="mt3 b txt-sm mb2">مسار المعاملة:</div>
+    <div class="tl">${r.timeline.map(t=>`<div class="tl-item ${t.status}"><div class="sb txt-sm">${esc(t.title)}</div><div class="txt-xs muted">${esc(t.description)}</div>${t.timestamp?`<div class="txt-xs muted2 mono mt1">${esc(t.timestamp)}</div>`:''}</div>`).join('')}</div>
+    ${(r.documents||[]).some(d=>d.status==='missing')?`<div class="chip urg-mid mt3" style="width:100%;justify-content:center;padding:8px">${icon('clip')} يوجد مستمسكات ناقصة — يرجى تزويد الجهة بها لإكمال معاملتك</div>
+    <button class="btn btn-wa btn-sm mt2" style="width:100%;justify-content:center" onclick="citizenSendDocs('${r.trackingId}')">${icon('wa')} مراسلة المكتب عبر واتساب لإرسال المستمسكات</button>`:''}
+  </div>`;
+}
+function citizenSendDocs(t){
+  const r = Store.byTracking(t); if(!r)return;
+  const missing = (r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name);
+  const msg = `السلام عليكم، أنا المستفيد ${r.citizenName} بخصوص معاملتي المرقمة (${r.trackingId}). أرغب بتزويدكم بالمستمسكات المطلوبة: ${missing.join(' و ')}.`;
+  window.open(waLink(APP.masterWhatsApp, msg),'_blank');
+}
+
+/* ------------------------------- واجهة المكتب ------------------------------- */
+function filtered(){
+  const f=state.filters;
+  return state.requests.filter(r=>{
+    if(f.q){ const s=f.q.toLowerCase(); if(!(r.trackingId.toLowerCase().includes(s)||r.citizenName.includes(f.q)||r.phone.includes(f.q)||(r.title||'').includes(f.q)||(r.nationalId||'').includes(f.q))) return false; }
+    if(f.status!=='الكل'&&r.status!==f.status)return false;
+    if(f.gov!=='الكل'&&r.governorate!==f.gov)return false;
+    if(f.ministry!=='الكل'&&r.targetMinistry!==f.ministry)return false;
+    if(f.urgency!=='الكل'&&r.urgency!==f.urgency)return false;
+    if(f.docs==='ناقصة'&&!(r.documents||[]).some(d=>d.status==='missing'))return false;
+    if(f.docs==='مكتملة'&&(r.documents||[]).some(d=>d.status==='missing'))return false;
+    return true;
+  });
+}
+function renderStats(){
+  const s=Store.stats(); const F=state.filters.status;
+  const cell=(key,label,val,color)=>`<div class="stat ${F===key?'active':''}" onclick="setStatus('${key}')"><div class="n" style="color:${color}">${val}</div><div class="txt-xs sb muted">${label}</div></div>`;
+  return `<div class="grid g4 gap3 mb4">
+    ${cell('الكل','كل المعاملات',s.total,'var(--sl-900)')}
+    ${cell('قيد التدقيق','قيد التدقيق',s.underReview,'#854d0e')}
+    ${cell('بانتظار مستمسكات','بانتظار مستمسكات',s.waitingDocs,'#9a3412')}
+    ${cell('أحيل بكتاب رسمي','أحيلت بكتاب',s.dispatched,'var(--em-700)')}
+  </div>`;
+}
+function reqCard(r){
+  const sla=slaInfo(r.submittedAt,r.status); const comp=(r.aiAnalysis&&r.aiAnalysis.completenessRate)||0;
+  return `<div class="req-row">
+    <div class="flex items-center justify-between wrap gap2">
+      <div class="flex items-center gap3">
+        <div><div class="b">${esc(r.citizenName)} ${sla.isOverdue?`<span class="chip urg-high txt-xs">متجاوزة المهلة</span>`:''}</div>
+        <div class="txt-xs muted">${esc(r.title)}</div></div>
+      </div>
+      <div class="flex items-center gap2">${urgBadge(r.urgency)}${statusBadge(r.status)}</div>
+    </div>
+    <div class="flex items-center justify-between wrap gap2 mt3 txt-xs muted">
+      <span class="mono b">${esc(r.trackingId)}</span>
+      <span>${esc(r.governorate)} · ${esc(r.targetMinistry)}</span>
+      <span>اكتمال المستمسكات: <b class="${comp>=80?'em':''}">${comp}%</b></span>
+    </div>
+    <div class="flex gap2 mt3 wrap">
+      <button class="btn btn-gray btn-sm" onclick="openDetail('${r.id}')">${icon('file')} التفاصيل والتحديث</button>
+      <button class="btn btn-wa btn-sm" onclick="openWhatsApp('${r.id}')">${icon('wa')} واتساب</button>
+      <button class="btn btn-white btn-sm" onclick="openLetter('${r.id}')">${icon('file')} كتاب رسمي</button>
+      <button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة باركود</button>
+    </div>
+  </div>`;
+}
+function renderDashboard(){
+  const list=filtered();
+  return `<div class="wrapmax" style="padding:18px 16px">
+    ${renderStats()}
+    <div class="card pad4 mb4">
+      <div class="flex items-center gap2 mb3 wrap">
+        <div class="input-ic grow" style="min-width:180px">${icon('search')}<input placeholder="بحث بالاسم أو رمز المعاملة أو الهاتف..." value="${esc(state.filters.q)}" oninput="state.filters.q=this.value;renderBody()"></div>
+        <select style="width:auto" onchange="state.filters.gov=this.value;renderBody()">${['الكل',...GOVS].map(g=>`<option ${state.filters.gov===g?'selected':''}>${g}</option>`).join('')}</select>
+        <select style="width:auto" onchange="state.filters.urgency=this.value;renderBody()">${['الكل',...URGENCIES].map(g=>`<option ${state.filters.urgency===g?'selected':''}>${g}</option>`).join('')}</select>
+        <select style="width:auto" onchange="state.filters.docs=this.value;renderBody()">${['الكل','ناقصة','مكتملة'].map(g=>`<option ${state.filters.docs===g?'selected':''}>${g==='الكل'?'كل المستمسكات':'مستمسكات '+g}</option>`).join('')}</select>
+        <button class="btn btn-white btn-sm" onclick="resetFilters()">${icon('refresh')} تصفير</button>
+      </div>
+      <div class="flex items-center gap2 wrap" style="padding:10px;background:var(--em-50);border-radius:10px">
+        <span class="chip" style="background:var(--em-800);color:#fff">${icon('sparkle')} فرز ذكي</span>
+        <input class="grow" id="aiFilterInput" placeholder="اكتب أمراً بلغتك: أظهر الحالات العاجلة في بغداد الناقصة مستمسكات..." style="min-width:200px;background:#fff">
+        <button class="btn btn-em btn-sm" onclick="runAiFilter()">تنفيذ بالذكاء الاصطناعي</button>
+      </div>
+      <div id="aiFilterNote"></div>
+    </div>
+    <div class="flex items-center justify-between mb2"><span class="b txt-sm">النتائج (${list.length})</span><button class="btn btn-white btn-sm" onclick="sortList('urgency')">${icon('sort')} ترتيب حسب الأسبقية</button></div>
+    <div class="flex col gap3">${list.length?list.map(reqCard).join(''):'<div class="card pad6 center muted">لا توجد معاملات مطابقة</div>'}</div>
+  </div>`;
+}
+function renderSecretaryQuick(){
+  const list=filtered().slice(0,40); const s=Store.stats();
+  return `<div class="wrapmax" style="padding:18px 16px">
+    <div class="card pad5 mb4" style="background:var(--sl-900);color:#fff">
+      <div class="flex items-center justify-between wrap gap3">
+        <div><div class="b txt-lg" style="color:var(--am-300)">${icon('shield')} لوحة التحديث السريع</div><div class="txt-sm" style="color:var(--sl-400)">مرحباً ${esc(state.session?state.session.name:'موظف المكتب')} — ${esc(state.settings.officeName||APP.office)}</div></div>
+        <div class="flex gap2 wrap">
+          <button class="btn btn-em btn-sm" onclick="openNewRequest()">${icon('plus')} معاملة جديدة</button>
+          <button class="btn btn-dark btn-sm" onclick="openScanner()">${icon('cam')} مسح باركود</button>
+          <button class="btn btn-wa btn-sm" onclick="syncNow()">${icon('refresh')} مزامنة كوكل</button>
+        </div>
+      </div>
+      <div class="grid g4 gap2 mt4">
+        <div class="center"><div class="n black mono txt-2xl">${s.total}</div><div class="txt-xs" style="color:var(--sl-400)">الكل</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:var(--am-300)">${s.waitingDocs}</div><div class="txt-xs" style="color:var(--sl-400)">بانتظار مستمسكات</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:#93c5fd">${s.underReview}</div><div class="txt-xs" style="color:var(--sl-400)">قيد التدقيق</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:var(--em-300)">${s.approved}</div><div class="txt-xs" style="color:var(--sl-400)">منجزة</div></div>
+      </div>
+    </div>
+    <div class="input-ic mb3">${icon('search')}<input placeholder="بحث سريع..." value="${esc(state.filters.q)}" oninput="state.filters.q=this.value;renderBody()"></div>
+    <div class="flex col gap3">${list.map(reqCard).join('')||'<div class="card pad6 center muted">لا توجد معاملات</div>'}</div>
+  </div>`;
+}
+function renderWhatsAppHub(){
+  const list=state.requests.filter(r=>(r.documents||[]).some(d=>d.status==='missing')||r.status==='أحيل بكتاب رسمي');
+  return `<div class="wrapmax" style="padding:18px 16px">
+    <div class="card pad5 mb4"><div class="b txt-lg flex items-center gap2">${icon('wa')} مركز مراسلات واتساب</div><div class="txt-sm muted mt1">المعاملات التي تحتاج تواصلاً فورياً مع المستفيد (مستمسكات ناقصة أو تحديث رسمي).</div></div>
+    <div class="flex col gap3">${list.map(reqCard).join('')||'<div class="card pad6 center muted">لا توجد مراسلات معلّقة</div>'}</div>
+  </div>`;
+}
+function renderLetters(){
+  const list=state.requests.filter(r=>r.officialLetterNumber||r.status==='أحيل بكتاب رسمي'||r.status==='قيد المتابعة بالوزارة');
+  return `<div class="wrapmax" style="padding:18px 16px">
+    <div class="card pad5 mb4"><div class="b txt-lg flex items-center gap2">${icon('file')} سجل الكتب الرسمية الرسمية</div><div class="txt-sm muted mt1">الكتب الصادرة بتوقيع الجهة المختصة إلى الوزارات والجهات المعنية.</div></div>
+    <div class="flex col gap3">${list.map(r=>`<div class="req-row"><div class="flex items-center justify-between wrap gap2"><div><div class="b">${esc(r.title)}</div><div class="txt-xs muted">${esc(r.citizenName)} · ${esc(r.targetMinistry)}</div></div><div class="center">${r.officialLetterNumber?`<span class="mono b txt-sm">${esc(r.officialLetterNumber)}</span><div class="txt-xs muted">${esc(r.officialLetterDate||'')}</div>`:statusBadge(r.status)}</div></div><div class="flex gap2 mt3"><button class="btn btn-gray btn-sm" onclick="openLetter('${r.id}')">${icon('file')} عرض وطباعة الكتاب</button></div></div>`).join('')||'<div class="card pad6 center muted">لا توجد كتب رسمية بعد</div>'}</div>
+  </div>`;
+}
+
+/* --------------------------------- التذييل --------------------------------- */
+function renderFooter(){
+  return `<footer class="no-print"><div class="wrapmax flex items-center justify-between wrap gap3 txt-xs muted">
+    <div><b class="sb" style="color:var(--sl-800)">${esc(state.settings.officeName||APP.office)}</b> — منظومة إدارة المعاملات</div>
+    <div class="flex items-center gap3">
+      <span>${esc(APP.brandLine)} · ${APP.masterWhatsApp.replace('964','0')}</span>
+      <span>·</span>
+      <span class="mono">الإصدار ${APP.version}</span>
+      <span class="chip ${state.online?'st-done':'urg-low'}">${state.online?'متصل':'غير متصل'}</span>
+    </div>
+  </div></footer>`;
+}
+
+/* ------------------------------- التجميع والعرض ------------------------------- */
+function renderBody(){
+  let body='';
+  if(state.mode==='citizen'){ body = renderCitizen(); }
+  else {
+    if(state.tab==='secretary-quick') body=renderSecretaryQuick();
+    else if(state.tab==='dashboard') body=renderDashboard();
+    else if(state.tab==='whatsapp-hub') body=renderWhatsAppHub();
+    else if(state.tab==='letters') body=renderLetters();
+    else body=renderSecretaryQuick();
+  }
+  $('#main').innerHTML = body;
+}
+function render(){
+  $('#app').innerHTML = `
+  ${renderHeader()}
+  ${!state.online?`<div class="banner off no-print">${icon('cloud')} وضع عدم الاتصال — يتم الحفظ محلياً وستتم المزامنة عند توفر الإنترنت</div>`:''}
+  <main id="main" style="flex:1"></main>
+  ${renderFooter()}
+  <button class="fab no-print" onclick="toggleAI()" title="المساعد الذكي">${icon('sparkle')}</button>
+  <div id="aiPanel"></div>
+  <div id="modalRoot"></div>`;
+  $('#app').style.minHeight='100vh'; $('#app').style.display='flex'; $('#app').style.flexDirection='column';
+  renderBody();
+  renderAIPanel();
+}
+
+/* --------------------------- أفعال التنقل العامة --------------------------- */
+function setMode(m){
+  if(m==='office' && !state.session){ openLogin(); return; }
+  state.mode=m; state.tab = m==='office'?'secretary-quick':'citizen-portal'; render();
+}
+function setTab(t){ state.tab=t; render(); }
+function setStatus(s){ state.filters.status=s; renderBody(); }
+function resetFilters(){ state.filters={q:'',gov:'الكل',ministry:'الكل',urgency:'الكل',docs:'الكل',status:'الكل'}; renderBody(); }
+function sortList(by){
+  if(by==='urgency'){ const o={'عاجل جداً':0,'متوسط':1,'عادي':2}; state.requests.sort((a,b)=>(o[a.urgency]??9)-(o[b.urgency]??9)); }
+  else if(by==='date'){ state.requests.sort((a,b)=>(b.submittedAt||'').localeCompare(a.submittedAt||'')); }
+  else if(by==='status'){ state.requests.sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status)); }
+  renderBody(); toast('تم ترتيب القائمة');
+}
+function logout(){ state.session=null; localStorage.removeItem('naib_session'); state.mode='citizen'; state.tab='citizen-portal'; render(); }
+
+/* ----------------------------- نوافذ (Modals) ----------------------------- */
+function openModal(html, maxw='560px'){
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:${maxw}">${html}</div></div>`;
+}
+function closeModal(){ $('#modalRoot').innerHTML=''; }
+
+function openLogin(){
+  openModal(`
+    <div class="modal-h" style="background:var(--sl-900);color:#fff;justify-content:space-between">
+      <div class="flex items-center gap2"><span style="background:var(--em-900);color:var(--am-400);padding:7px;border-radius:9px">${icon('shield')}</span>
+      <div><div class="b">دخول موظف الجهة المستلِمة</div><div class="txt-xs" style="color:var(--sl-400)">الدخول عبر الترخيص المعتمد للجهة</div></div></div>
+      <button class="x" style="color:#94a3b8" onclick="closeModal()">${icon('x')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="field"><label>اسم الموظف / المستخدم</label><input id="lgName" value="موظف الجهة المستلِمة"></div>
+      <div class="field"><label>كلمة المرور</label><input id="lgPass" type="password" value="" placeholder="••••••"></div>
+      <div class="chip st-done" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px">${icon('check2')} البرنامج مُفعّل بالترخيص السحابي</div>
+      <button class="btn btn-dark" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">${icon('shield')} دخول</button>
+      <p class="txt-xs muted2 center mt3">كلمة المرور الافتراضية لأول دخول: <b class="mono">123456</b> (يمكن تغييرها من الإعدادات)</p>
+    </div>`,'440px');
+}
+function doLogin(){
+  const name=$('#lgName').value.trim()||'موظف المكتب'; const pass=$('#lgPass').value;
+  const stored = state.settings.staffPass || '123456';
+  if(pass!==stored){ toast('كلمة المرور غير صحيحة', false); return; }
+  state.session={ name, role:'موظف المكتب', loginAt:nowStr() };
+  localStorage.setItem('naib_session', JSON.stringify(state.session));
+  closeModal(); state.mode='office'; state.tab='secretary-quick'; render(); toast('مرحباً '+name);
+}
+
+/* تفاصيل المعاملة + التحديث */
+function openDetail(id){
+  const r=state.requests.find(x=>x.id===id); if(!r)return;
+  const ai=r.aiAnalysis||{};
+  openModal(`
+    <div class="modal-h" style="background:var(--em-950);color:#fff;justify-content:space-between">
+      <div><div class="b">${esc(r.citizenName)}</div><div class="txt-xs" style="color:var(--em-200)">${esc(r.trackingId)} · ${esc(r.governorate)}</div></div>
+      <button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="barcode-box mb3">${Barcode(r.trackingId)}<div class="flex gap2 justify-center mt2"><button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة الوصل والباركود</button></div></div>
+      <div class="field"><label>عنوان الطلب</label><div class="card pad3 txt-sm">${esc(r.title)}</div></div>
+      <div class="field"><label>تفاصيل المناشدة</label><div class="card pad3 txt-sm" style="line-height:1.8">${esc(r.description)}</div></div>
+      <div class="grid g2 gap3">
+        <div class="field"><label>الحالة</label><select id="dStatus">${STATUSES.map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>الأسبقية</label><select id="dUrg">${URGENCIES.map(s=>`<option ${r.urgency===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      </div>
+      <div class="grid g2 gap3">
+        <div class="field"><label>رقم الكتاب الرسمي</label><input id="dLetterNo" value="${esc(r.officialLetterNumber||'')}" placeholder="رقم/2026/..."></div>
+        <div class="field"><label>تاريخ الكتاب</label><input id="dLetterDate" value="${esc(r.officialLetterDate||'')}" placeholder="2026-11-01"></div>
+      </div>
+      <div class="field"><label>ملاحظات المكتب</label><textarea id="dNotes" rows="2">${esc(r.staffNotes||'')}</textarea></div>
+      <div class="field"><label>المستمسكات (اسم المستمسك ورقمه/قيمته)</label><div class="card pad3">${docsEditor('editDocRows', r.documents, true)}</div></div>
+      <div class="card pad4 mb3" style="background:var(--em-50);border-color:var(--em-200)">
+        <div class="flex items-center justify-between mb2"><span class="b txt-sm em">${icon('sparkle')} التحليل الذكي</span><button class="btn btn-em btn-sm" onclick="reAudit('${r.id}')">إعادة التدقيق</button></div>
+        <div class="txt-sm" style="line-height:1.8">${esc(ai.summary||'—')}</div>
+        ${(ai.missingDocsSummary&&ai.missingDocsSummary.length)?`<div class="txt-xs mt2"><b>النواقص:</b> ${ai.missingDocsSummary.map(esc).join('، ')}</div>`:''}
+        ${ai.suggestedAction?`<div class="txt-xs mt1"><b>الإجراء المقترح:</b> ${esc(ai.suggestedAction)}</div>`:''}
+      </div>
+      <div class="flex gap2 wrap">
+        <button class="btn btn-em grow" style="justify-content:center" onclick="saveDetail('${r.id}')">${icon('check')} حفظ التحديثات</button>
+        <button class="btn btn-wa" onclick="openWhatsApp('${r.id}')">${icon('wa')}</button>
+        <button class="btn btn-white" onclick="openLetter('${r.id}')">${icon('file')}</button>
+      </div>
+    </div>`,'620px');
+}
+function updateDoc(id,i,v){ const r=state.requests.find(x=>x.id===id); if(r&&r.documents[i]){ r.documents[i].status=v; } }
+function saveDetail(id){
+  const r=state.requests.find(x=>x.id===id); if(!r)return;
+  r.status=$('#dStatus').value; r.urgency=$('#dUrg').value; r.officialLetterNumber=$('#dLetterNo').value.trim(); r.officialLetterDate=$('#dLetterDate').value.trim(); r.staffNotes=$('#dNotes').value; r.documents=readDocRows('editDocRows'); r.updatedAt=nowStr();
+  Store.upsert(r); closeModal(); render(); toast('تم حفظ التحديثات' + (state.settings.gasUrl?' ومزامنتها':''));
+}
+function reAudit(id){ const r=state.requests.find(x=>x.id===id); if(!r)return; r.aiAnalysis=heuristicAudit(r.category,r.title,r.description,r.documents); Store.upsert(r); openDetail(id); toast('تم إعادة التدقيق'); }
+
+/* ---------- حقول المستمسكات اليدوية (اسم المستمسك + رقمه/قيمته) ---------- */
+function docRowHtml(name,value,status){
+  status=status||'submitted'; name=name||''; value=value||'';
+  return `<div class="doc-row flex gap2 items-center" style="margin-bottom:8px">
+    <input class="doc-name grow" placeholder="اسم المستمسك (مثال: البطاقة الوطنية)" value="${esc(name)}" style="min-width:120px">
+    <input class="doc-val" placeholder="الرقم/القيمة" value="${esc(value)}" style="max-width:150px">
+    <select class="doc-st" style="width:auto;padding:7px 8px">
+      <option value="submitted" ${status==='submitted'?'selected':''}>مستلمة</option>
+      <option value="verified" ${status==='verified'?'selected':''}>مدقّقة</option>
+      <option value="missing" ${status==='missing'?'selected':''}>ناقصة</option>
+    </select>
+    <button type="button" class="x shrink0" onclick="this.closest('.doc-row').remove()">${icon('x')}</button>
+  </div>`;
+}
+function addDocRow(containerId){ const c=$('#'+containerId); if(c) c.insertAdjacentHTML('beforeend', docRowHtml('','','submitted')); }
+function readDocRows(containerId){
+  const out=[]; const c=$('#'+containerId); if(!c) return out;
+  c.querySelectorAll('.doc-row').forEach((row,i)=>{
+    const name=row.querySelector('.doc-name').value.trim();
+    const value=row.querySelector('.doc-val').value.trim();
+    const status=row.querySelector('.doc-st').value;
+    if(name) out.push({id:'d'+i, name, value, status, required:true});
+  });
+  return out;
+}
+function docsEditor(containerId, docs, commonBtn){
+  const rows=(docs&&docs.length)?docs.map(d=>docRowHtml(d.name,d.value,d.status)).join(''):docRowHtml('','','submitted')+docRowHtml('','','submitted');
+  const common=commonBtn?`<div class="flex gap1 wrap mt1 mb2">${['البطاقة الوطنية','بطاقة السكن','جواز سفر','تأييد سكن'].map(n=>`<button type="button" class="btn btn-white btn-sm" onclick="this.closest('.docbox').querySelector('#${containerId}').insertAdjacentHTML('beforeend', docRowHtml('${n}','','submitted'))">+ ${n}</button>`).join('')}</div>`:'';
+  return `<div class="docbox"><div id="${containerId}">${rows}</div>${common}<button type="button" class="btn btn-gray btn-sm mt1" onclick="addDocRow('${containerId}')">${icon('plus')} إضافة مستمسك فارغ</button></div>`;
+}
+
+/* معاملة جديدة */
+function openNewRequest(){
+  openModal(`
+    <div class="modal-h" style="background:var(--em-800);color:#fff;justify-content:space-between">
+      <div class="b">${icon('plus')} تسجيل معاملة / مناشدة جديدة</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="grid g2 gap3">
+        <div class="field"><label>اسم المستفيد الثلاثي *</label><input id="nName" placeholder="الاسم الكامل"></div>
+        <div class="field"><label>رقم الهاتف *</label><input id="nPhone" class="mono" placeholder="07xxxxxxxxx"></div>
+        <div class="field"><label>الرقم الوطني</label><input id="nNid" class="mono" placeholder="اختياري"></div>
+        <div class="field"><label>المحافظة</label><select id="nGov">${GOVS.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>القضاء / المحلة</label><input id="nDist" placeholder="مثال: الكرخ - حي..."></div>
+        <div class="field"><label>القطاع</label><select id="nCat">${CATEGORIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>الوزارة المعنية</label><select id="nMin">${MINISTRIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>الأسبقية</label><select id="nUrg">${URGENCIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label>عنوان الطلب *</label><input id="nTitle" placeholder="عنوان مختصر للمناشدة"></div>
+      <div class="field"><label>تفاصيل المناشدة</label><textarea id="nDesc" rows="3" placeholder="اشرح طلب المستفيد بالتفصيل..."></textarea></div>
+      <div class="field"><label>المستمسكات (اكتب اسم المستمسك ورقمه/قيمته)</label>${docsEditor('newDocRows', null, true)}</div>
+      <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px" onclick="createRequest()">${icon('check')} تسجيل المعاملة وتوليد رمز التتبع</button>
+    </div>`,'640px');
+}
+function createRequest(){
+  const name=$('#nName').value.trim(), phone=$('#nPhone').value.trim(), title=$('#nTitle').value.trim();
+  if(!name||!phone||!title){ toast('يرجى إكمال الاسم والهاتف وعنوان الطلب', false); return; }
+  const cat=$('#nCat').value, desc=$('#nDesc').value.trim();
+  const docs=readDocRows('newDocRows');
+  const t=Store.newTracking(); const code='IQ'+t.split('-')[2];
+  const audit=heuristicAudit(cat,title,desc,docs);
+  // أضف النواقص كمستمسكات ناقصة
+  audit.missingDocsSummary.forEach((m,i)=>docs.push({id:'m'+i,name:m,status:'missing',required:true}));
+  const req={ id:'req-'+Date.now(), trackingId:t, citizenName:name, nationalId:$('#nNid').value.trim(), phone, governorate:$('#nGov').value, district:$('#nDist').value.trim(), category:cat, targetMinistry:$('#nMin').value, title, description:desc, urgency:$('#nUrg').value, status:'مستلم', submittedAt:nowStr(), updatedAt:nowStr(), documents:docs,
+    timeline:[{id:'t1',timestamp:nowStr(),title:'استلام المعاملة وتسجيلها',description:'تم تسجيل الطلب وتوليد رمز التتبع والباركود.',actor:state.settings.officeName||APP.office,status:'current'}],
+    aiAnalysis:audit, staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
+  Store.upsert(req); closeModal(); render();
+  // إشعار واتساب للمستفيد ببيانات الحساب والباركود
+  const msg=`عزيزي المستفيد ${name}\nتم استلام وتسجيل طلبكم بنجاح لدى ${state.settings.officeName||APP.office}.\nرمز المعاملة (الباركود): ${t}\nكلمة مرور المتابعة: ${code}\nيمكنكم متابعة حالة معاملتكم في أي وقت عبر المنظومة.`;
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل المعاملة</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b center">
+      <div class="barcode-box mb3">${Barcode(t)}</div>
+      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="kv"><span class="muted">رمز المعاملة</span><b class="mono">${t}</b></div><div class="kv"><span class="muted">كلمة مرور المستفيد</span><b class="mono em">${code}</b></div></div>
+      <div class="flex gap2 justify-center wrap">
+        <a class="btn btn-wa" href="${waLink(phone,msg)}" target="_blank" onclick="closeModal()">${icon('wa')} إرسال البيانات للمستفيد</a>
+        <button class="btn btn-white" onclick="printBarcode('${req.id}')">${icon('print')} طباعة الوصل</button>
+      </div>
+    </div>`,'460px');
+}
+
+/* واتساب */
+function waTemplates(r,kind){
+  const office=state.settings.officeName||APP.office;
+  const missing=(r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name);
+  if(kind==='approved') return `بشرى سارة للمستفيد ${r.citizenName}\nيسر ${office} إعلامكم بصدور الموافقة الرسمية على طلبكم المرقم (${r.trackingId}) بعنوان: "${r.title}".\nنبارك لكم ونسأل الله التوفيق.`;
+  if(kind==='status') return `عزيزي المستفيد ${r.citizenName}\nنحيطكم علماً بأن طلبكم المرقم (${r.trackingId}) الخاص بـ "${r.title}" حالته الحالية: [${r.status}].\nيمكنكم متابعة المعاملة برمز التتبع (${r.trackingId}).\nمع تحيات ${office}.`;
+  return `عزيزي المستفيد ${r.citizenName}\nبخصوص طلبكم المرقم (${r.trackingId})، نحتاج لاستكمال المستمسكات التالية:\n${missing.map((m,i)=>(i+1)+'. '+m).join('\n')||'- (لا نواقص مسجلة)'}\nيرجى تزويد ${office} بها لإكمال معاملتكم. شكراً لتعاونكم.`;
+}
+function openWhatsApp(id){
+  const r=state.requests.find(x=>x.id===id); if(!r)return;
+  const draft=waTemplates(r,'missing_docs');
+  openModal(`<div class="modal-h" style="background:#16a34a;color:#fff;justify-content:space-between"><div class="b">${icon('wa')} مراسلة ${esc(r.citizenName)}</div><button class="x" style="color:#bbf7d0" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="flex gap2 wrap mb3">
+        <button class="btn btn-gray btn-sm" onclick="document.getElementById('waTxt').value=waTemplates(state.requests.find(x=>x.id==='${id}'),'missing_docs')">نموذج النواقص</button>
+        <button class="btn btn-gray btn-sm" onclick="document.getElementById('waTxt').value=waTemplates(state.requests.find(x=>x.id==='${id}'),'status')">تحديث الحالة</button>
+        <button class="btn btn-gray btn-sm" onclick="document.getElementById('waTxt').value=waTemplates(state.requests.find(x=>x.id==='${id}'),'approved')">إشعار الموافقة</button>
+        ${AI.ready()?`<button class="btn btn-em btn-sm" onclick="aiDraftWhatsApp('${id}')">${icon('sparkle')} صياغة بالذكاء الاصطناعي</button>`:''}
+      </div>
+      <div class="field"><label>نص الرسالة</label><textarea id="waTxt" rows="7">${esc(draft)}</textarea></div>
+      <a class="btn btn-wa" style="width:100%;justify-content:center;padding:11px" id="waGo" href="${waLink(r.phone,draft)}" target="_blank">${icon('send')} فتح واتساب وإرسال الرسالة</a>
+    </div>`,'520px');
+  const txt=$('#waTxt'); txt.oninput=()=>{ $('#waGo').href=waLink(r.phone,txt.value); };
+}
+async function aiDraftWhatsApp(id){
+  const r=state.requests.find(x=>x.id===id); if(!r||!AI.ready())return;
+  toast('جارِ الصياغة بالذكاء الاصطناعي...');
+  try{
+    const out=await AI.ask([{role:'user',content:`اكتب رسالة واتساب رسمية ومهذبة للمستفيد ${r.citizenName} بخصوص معاملته ${r.trackingId} "${r.title}"، حالتها ${r.status}، والمستمسكات الناقصة: ${(r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name).join('، ')||'لا يوجد'}. أعد الرسالة فقط بلا مقدمات.`}]);
+    const {text}=AI.parseActions(out); const el=$('#waTxt'); if(el){ el.value=text.trim(); $('#waGo').href=waLink(r.phone,text.trim()); }
+  }catch(e){ toast('تعذّر الاتصال بالذكاء الاصطناعي: '+e.message,false); }
+}
+
+/* كتاب رسمي */
+function letterText(r){
+  const office=state.settings.officeName||APP.office;
+  return `بسم الله الرحمن الرحيم\n\n${office}\n\nالعدد: ${r.officialLetterNumber||'رقم/2026/____'}\nالتاريخ: ${r.officialLetterDate||new Date().toLocaleDateString('ar-IQ')}\n\nإلى / ${r.targetMinistry} المحترم\nم/ ${r.title}\n\nتحية طيبة...\nنحيطكم علماً بأن المستفيد (${r.citizenName}) — المحافظة: ${r.governorate} — قد تقدّم بطلبه المرقم (${r.trackingId}) والمتضمن: ${r.description||r.title}.\n\nنظراً لأهمية الحالة (${r.urgency})، يرجى التفضل بالاطلاع واتخاذ ما يلزم وفق الضوابط والتعليمات النافذة، وإعلامنا بالنتيجة لمتابعة المستفيد.\n\nمع التقدير.\n\nالتوقيع والختم\n${office}`;
+}
+function openLetter(id){
+  const r=state.requests.find(x=>x.id===id); if(!r)return;
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b">${icon('file')} كتاب رسمي</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      ${AI.ready()?`<button class="btn btn-em btn-sm mb3" onclick="aiDraftLetter('${id}')">${icon('sparkle')} صياغة الكتاب بالذكاء الاصطناعي</button>`:''}
+      <div class="print-area card pad5" id="letterPrint" style="line-height:2;white-space:pre-wrap;font-size:14px">${esc(letterText(r))}</div>
+      <textarea id="letterEdit" rows="8" class="mt3 hidden"></textarea>
+      <div class="flex gap2 mt3 wrap no-print">
+        <button class="btn btn-em grow" style="justify-content:center" onclick="printLetter()">${icon('print')} طباعة الكتاب</button>
+        <button class="btn btn-white" onclick="copyText(letterText(state.requests.find(x=>x.id==='${id}')))">${icon('copy')} نسخ</button>
+      </div>
+    </div>`,'680px');
+}
+async function aiDraftLetter(id){
+  const r=state.requests.find(x=>x.id===id); if(!r||!AI.ready())return; toast('جارِ صياغة الكتاب...');
+  try{ const out=await AI.ask([{role:'user',content:`اكتب كتاباً رسمياً كاملاً موجهاً إلى ${r.targetMinistry} بخصوص معاملة المستفيد ${r.citizenName} (${r.trackingId}): ${r.title}. التفاصيل: ${r.description}. بصيغة رسمية حكومية. أعد نص الكتاب فقط.`}]);
+    const {text}=AI.parseActions(out); const el=$('#letterPrint'); if(el) el.textContent=text.trim();
+  }catch(e){ toast('تعذّر الاتصال: '+e.message,false); }
+}
+function printLetter(){ window.print(); }
+function copyText(t){ navigator.clipboard.writeText(t); toast('تم النسخ'); }
+
+/* طباعة الباركود والوصل */
+function printBarcode(id){
+  const r=state.requests.find(x=>x.id===id); if(!r)return;
+  const w=window.open('','_blank');
+  const docsRows=(r.documents||[]).map(d=>`<div class="kv"><span>${esc(d.name)}${d.status==='missing'?' <small style="color:#dc2626">(ناقص)</small>':''}</span><b>${esc(d.value||'—')}</b></div>`).join('');
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>وصل ${r.trackingId}</title>
+  <style>body{font-family:'Cairo',Arial,sans-serif;padding:24px;max-width:420px;margin:auto}.b{font-weight:800}.c{text-align:center}.box{border:1px solid #cbd5e1;border-radius:12px;padding:16px;margin-top:12px}.kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;font-size:13px}.t{font-weight:800;font-size:13px;margin:0 0 6px}table{width:100%}</style></head>
+  <body><div class="c"><div class="b" style="font-size:16px">${esc(state.settings.officeName||APP.office)}</div><div style="color:#065f46;font-weight:700">منظومة إدارة المعاملات</div><div style="font-size:12px;color:#64748b">وصل استلام معاملة</div></div>
+  <div class="box">${Barcode(r.trackingId)}</div>
+  <div class="box"><div class="kv"><span>رمز المعاملة</span><b>${esc(r.trackingId)}</b></div><div class="kv"><span>اسم المستفيد</span><b>${esc(r.citizenName)}</b></div><div class="kv"><span>عنوان الطلب</span><span>${esc(r.title)}</span></div><div class="kv"><span>المحافظة</span><span>${esc(r.governorate)}</span></div><div class="kv"><span>تاريخ التقديم</span><span>${esc(r.submittedAt)}</span></div><div class="kv"><span>كلمة مرور المتابعة</span><b>${esc(r.accessAccount?r.accessAccount.accessCode:'')}</b></div></div>
+  ${docsRows?`<div class="box"><div class="t">المستمسكات وأرقامها</div>${docsRows}</div>`:''}
+  <p class="c" style="font-size:11px;color:#64748b;margin-top:14px">احتفظ بهذا الوصل — امسح الباركود لمتابعة معاملتك</p>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+/* -------------------------- مسح الباركود بالكاميرا -------------------------- */
+let scanStream=null, scanRAF=null;
+function openScanner(){
+  openModal(`<div class="modal-h" style="background:var(--sl-900);color:#fff;justify-content:space-between"><div class="b">${icon('cam')} مسح باركود رمز المعاملة</div><button class="x" style="color:#94a3b8" onclick="stopScan();closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="scan-frame"><video id="scanVid" class="scan-video" playsinline muted></video><div class="scan-line"></div></div>
+      <div id="scanMsg" class="txt-sm muted center mt3">وجّه الكاميرا نحو الباركود...</div>
+      <div class="field mt3"><label>أو ادخل رمز المعاملة يدوياً</label><div class="flex gap2"><input id="scanManual" class="mono" placeholder="IQ-2026-XXXX"><button class="btn btn-em" onclick="scanOpen($('#scanManual').value)">فتح</button></div></div>
+    </div>`,'480px');
+  startScan();
+}
+async function startScan(){
+  const vid=$('#scanVid'); const msg=$('#scanMsg');
+  if(!('BarcodeDetector' in window)){ msg.innerHTML='<span class="chip urg-mid" style="padding:6px">متصفحك لا يدعم المسح التلقائي — استخدم الإدخال اليدوي أو متصفح Chrome على الهاتف</span>'; }
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    vid.srcObject=scanStream; await vid.play();
+    if('BarcodeDetector' in window){
+      const det=new BarcodeDetector({formats:['code_128','qr_code','ean_13','code_39']});
+      const tick=async()=>{ if(!scanStream)return; try{ const codes=await det.detect(vid); if(codes.length){ stopScan(); scanOpen(codes[0].rawValue); return; } }catch(e){} scanRAF=requestAnimationFrame(tick); };
+      scanRAF=requestAnimationFrame(tick);
+    }
+  }catch(e){ msg.innerHTML='<span class="chip urg-high" style="padding:6px">تعذّر الوصول للكاميرا: '+esc(e.message)+'</span>'; }
+}
+function stopScan(){ if(scanRAF)cancelAnimationFrame(scanRAF); scanRAF=null; if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; } }
+function scanOpen(code){
+  stopScan(); const r=Store.byTracking((code||'').trim()); closeModal();
+  if(!r){ toast('لم يتم العثور على معاملة: '+code, false); return; }
+  if(state.mode==='office'){ openDetail(r.id); } else { state.mode='citizen'; render(); setTimeout(()=>{ const i=$('#trackInput'); if(i){i.value=r.trackingId; doTrack();} },50); }
+}
+
+/* ---------------------------- ربط كوكل سكربت ---------------------------- */
+function openGas(){
+  openModal(`<div class="modal-h" style="background:var(--em-950);color:#fff;justify-content:space-between"><div><div class="b">${icon('cloud')} الربط السحابي مع Google Apps Script</div><div class="txt-xs" style="color:var(--em-200)">مزامنة البيانات في Google Sheets تعمل على أي جهاز</div></div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="field"><label>رابط تطبيق الويب (Web App URL)</label><div class="flex gap2"><input id="gasUrl" class="mono txt-xs grow" value="${esc(state.settings.gasUrl)}" placeholder="https://script.google.com/macros/s/.../exec"><button class="btn btn-em" onclick="saveGas()">حفظ</button></div></div>
+      <div class="flex gap2 mb3 wrap"><button class="btn btn-em btn-sm" onclick="syncNow()">${icon('refresh')} رفع البيانات للسحابة</button><button class="btn btn-white btn-sm" onclick="pullNow()">${icon('cloud')} جلب من السحابة</button></div>
+      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="b txt-sm mb2">خطوات الإعداد (دقيقة واحدة):</div><ol style="padding-right:18px;font-size:12px;line-height:1.9">
+        <li>افتح <b>sheets.google.com</b> وأنشئ جدولاً جديداً.</li>
+        <li>من القائمة: <b>الإضافات (Extensions) ← Apps Script</b>.</li>
+        <li>احذف الموجود والصق الكود أدناه ثم <b>حفظ</b>.</li>
+        <li><b>Deploy ← New deployment ← Web app</b>، والوصول: <b>Anyone</b>.</li>
+        <li>انسخ الرابط وضعه أعلاه.</li></ol></div>
+      <div class="flex items-center justify-between mb2"><span class="b txt-sm">كود Code.gs الجاهز</span><button class="btn btn-em btn-sm" onclick="copyText(GAS_CODE)">${icon('copy')} نسخ الكود</button></div>
+      <div class="codebox">${esc(GAS_CODE)}</div>
+    </div>`,'760px');
+}
+function saveGas(){ state.settings.gasUrl=$('#gasUrl').value.trim(); saveSettings(); toast('تم حفظ الرابط'); render(); }
+async function syncNow(){ if(!state.settings.gasUrl){ openGas(); return;} toast('جارِ المزامنة...'); const r=await GAS.push(); toast(r.ok?'تمت المزامنة السحابية بنجاح':'تعذّرت المزامنة: '+(r.error||''), r.ok); }
+async function pullNow(){ toast('جارِ الجلب...'); const r=await GAS.pull(); if(r.ok){ render(); toast('تم جلب البيانات من السحابة'); } else toast('تعذّر الجلب: '+(r.error||''),false); }
+
+/* ------------------------------- الإعدادات ------------------------------- */
+function openSettings(){
+  const s=state.settings;
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b">${icon('cog')} الإعدادات والذكاء الاصطناعي</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="field"><label>اسم الجهة</label><input value="${esc(s.officeName||APP.office)}" disabled title="يُضبط من رابط الترخيص فقط"><div class="txt-xs muted2 mt1">اسم الجهة يُحدَّد من رابط الترخيص عند التفعيل ولا يمكن تغييره هنا.</div></div>
+      <div class="field"><label>كلمة مرور دخول الموظف</label><input id="setPass" type="text" value="${esc(s.staffPass||'123456')}"></div>
+      <hr style="border:none;border-top:1px solid var(--sl-200);margin:14px 0">
+      <div class="b txt-sm mb2 em">${icon('sparkle')} مزوّد الذكاء الاصطناعي</div>
+      <div class="field"><label>المزوّد</label><select id="setProvider" onchange="document.getElementById('gemBox').classList.toggle('hidden',this.value!=='gemini');document.getElementById('clBox').classList.toggle('hidden',this.value!=='claude')">
+        <option value="gemini" ${s.aiProvider==='gemini'?'selected':''}>Google Gemini</option>
+        <option value="claude" ${s.aiProvider==='claude'?'selected':''}>Anthropic Claude</option></select></div>
+      <div id="gemBox" class="${s.aiProvider!=='gemini'?'hidden':''}">
+        <div class="field"><label>مفتاح Gemini API</label><input id="setGemKey" type="password" value="${esc(s.geminiKey)}" placeholder="AIza... أو AQ...."></div>
+        <div class="field"><label>اسم النموذج (يُختار تلقائياً نموذج متاح عند الفشل)</label><input id="setGemModel" class="mono txt-xs" value="${esc(s.geminiModel)}" list="gemModels">
+          <datalist id="gemModels"><option value="gemini-flash-latest"><option value="gemini-2.5-flash"><option value="gemini-2.0-flash"><option value="gemini-2.5-flash-lite"><option value="gemini-2.5-pro"></datalist></div>
+        <button class="btn btn-white btn-sm" style="width:100%;justify-content:center" onclick="testGemini()">${icon('refresh')} اختبار الاتصال وجلب النماذج المتاحة لمفتاحك</button>
+        <div id="gemTest" class="txt-xs mt2"></div>
+      </div>
+      <div id="clBox" class="${s.aiProvider!=='claude'?'hidden':''}">
+        <div class="field"><label>مفتاح Claude API</label><input id="setClKey" type="password" value="${esc(s.claudeKey)}" placeholder="sk-ant-..."></div>
+        <div class="field"><label>اسم النموذج</label><input id="setClModel" class="mono txt-xs" value="${esc(s.claudeModel)}"></div>
+      </div>
+      <div class="chip urg-low" style="width:100%;justify-content:center;padding:8px;line-height:1.6">تُحفظ المفاتيح محلياً على هذا الجهاز فقط ولا تُرسل لأي خادم عدا مزوّد الذكاء المختار.</div>
+      <button class="btn btn-em mt3" style="width:100%;justify-content:center;padding:11px" onclick="saveSettingsUI()">${icon('check')} حفظ الإعدادات</button>
+    </div>`,'560px');
+}
+async function testGemini(){
+  const box=$('#gemTest'); const key=$('#setGemKey').value.trim();
+  if(!key){ box.innerHTML='<span class="chip urg-mid" style="padding:4px 8px">ادخل المفتاح أولاً</span>'; return; }
+  state.settings.geminiKey=key; box.innerHTML='<span class="pulse em">جارِ الاختبار وجلب النماذج...</span>';
+  try{
+    const models=await AI.geminiListModels();
+    if(!models.length){ box.innerHTML='<span class="chip urg-high" style="padding:4px 8px">المفتاح يعمل لكن لا توجد نماذج توليد متاحة</span>'; return; }
+    const prefer=AI.pickGeminiModel(models);
+    $('#setGemModel').value=prefer; state.settings.geminiModel=prefer; saveSettings();
+    box.innerHTML=`<div class="chip st-done" style="padding:5px 9px">${icon('check2')} المفتاح يعمل — تم اختيار النموذج: <b class="mono">${esc(prefer)}</b></div>
+      <div class="muted mt1">النماذج المتاحة: ${models.slice(0,12).map(m=>'<span class="mono">'+esc(m)+'</span>').join('، ')}</div>`;
+  }catch(e){ box.innerHTML=`<span class="chip urg-high" style="padding:4px 8px">${esc(e.message)}</span>`; }
+}
+function saveSettingsUI(){
+  const s=state.settings;
+  s.staffPass=$('#setPass').value||'123456';
+  s.aiProvider=$('#setProvider').value;
+  s.geminiKey=$('#setGemKey').value.trim(); s.geminiModel=$('#setGemModel').value.trim()||'gemini-flash-latest';
+  s.claudeKey=$('#setClKey').value.trim(); s.claudeModel=$('#setClModel').value.trim()||'claude-sonnet-4-5';
+  saveSettings(); closeModal(); render(); toast('تم حفظ الإعدادات');
+}
+
+/* ------------------------------- الإشعارات ------------------------------- */
+function openNotifications(){
+  const over=state.requests.filter(r=>slaInfo(r.submittedAt,r.status).isOverdue);
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b">${icon('bell')} إشعارات المهل القانونية (7 أيام)</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><div class="flex col gap2">${over.length?over.map(r=>`<div class="req-row flex items-center justify-between gap2"><div><div class="b txt-sm">${esc(r.citizenName)}</div><div class="txt-xs muted">${esc(r.trackingId)} · منذ ${slaInfo(r.submittedAt,r.status).days} يوم</div></div><button class="btn btn-em btn-sm" onclick="closeModal();state.mode='office';openDetail('${r.id}')">متابعة</button></div>`).join(''):'<div class="center muted pad5">لا توجد معاملات متجاوزة للمهلة ✅</div>'}</div></div>`,'480px');
+}
+
+/* ---------------------- الفرز الذكي + المساعد الذكي ---------------------- */
+async function runAiFilter(){
+  const q=$('#aiFilterInput').value.trim(); if(!q)return;
+  const note=$('#aiFilterNote');
+  if(!AI.ready()){ // فرز محلي بسيط بالكلمات المفتاحية
+    applyLocalSmartFilter(q); note.innerHTML=`<div class="txt-xs muted mt2">تم الفرز محلياً (بدون ذكاء اصطناعي). فعّل مفتاح API من الإعدادات لفرز أدق.</div>`; return; }
+  note.innerHTML=`<div class="txt-xs em mt2 pulse">جارِ الفرز بالذكاء الاصطناعي...</div>`;
+  try{
+    const out=await AI.ask([{role:'user',content:'نفّذ هذا الفرز على المعاملات وأعد كتلة <ACT> فقط مع شرح موجز: '+q}]);
+    const {text,actions}=AI.parseActions(out); executeActions(actions); note.innerHTML=`<div class="txt-xs muted mt2">${esc(text||'تم تطبيق الفرز')}</div>`;
+  }catch(e){ note.innerHTML=`<div class="txt-xs urg-high mt2">تعذّر: ${esc(e.message)}</div>`; }
+}
+function applyLocalSmartFilter(q){
+  resetFilters();
+  GOVS.forEach(g=>{ if(q.includes(g)) state.filters.gov=g; });
+  URGENCIES.forEach(u=>{ if(q.includes(u)||(/عاجل/.test(q)&&u==='عاجل جداً')) state.filters.urgency=u; });
+  if(/ناقص|نقص/.test(q)) state.filters.docs='ناقصة';
+  STATUSES.forEach(s=>{ if(q.includes(s)) state.filters.status=s; });
+  renderBody();
+}
+function executeActions(actions){
+  if(!actions||!actions.length)return;
+  actions.forEach(a=>{
+    if(a.type==='filter'){ resetFilters(); if(a.status)state.filters.status=a.status; if(a.governorate)state.filters.gov=a.governorate; if(a.urgency)state.filters.urgency=a.urgency; if(a.q)state.filters.q=a.q; if(a.docs)state.filters.docs=a.docs; if(state.mode==='office'&&state.tab!=='dashboard'){state.tab='dashboard';render();} else renderBody(); }
+    else if(a.type==='sort'){ sortList(a.by==='date'?'date':a.by==='status'?'status':'urgency'); }
+    else if(a.type==='open'){ const r=Store.byTracking(a.trackingId); if(r)openDetail(r.id); }
+    else if(a.type==='goto'){ state.tab=a.tab; render(); }
+    else if(a.type==='draft_whatsapp'){ const r=Store.byTracking(a.trackingId); if(r)openWhatsApp(r.id); }
+    else if(a.type==='draft_letter'){ const r=Store.byTracking(a.trackingId); if(r)openLetter(r.id); }
+    else if(a.type==='audit'){ const r=Store.byTracking(a.trackingId); if(r)reAudit(r.id); }
+  });
+}
+function toggleAI(){ state.ai.open=!state.ai.open; renderAIPanel(); }
+function renderAIPanel(){
+  const root=$('#aiPanel'); if(!root)return;
+  if(!state.ai.open){ root.innerHTML=''; return; }
+  const msgs=state.ai.messages.map(m=>`<div class="bubble ${m.role==='user'?'u':'a'}">${esc(m.content)}</div>`).join('');
+  root.innerHTML=`<div class="ai-panel">
+    <div class="ai-head"><div class="flex items-center gap2 b">${icon('sparkle')} المساعد الذكي <span class="chip ${AI.ready()?'st-done':'urg-low'}" style="font-size:10px;padding:2px 7px">${AI.ready()?'متصل':'غير مُفعّل'}</span></div><button class="x" style="color:#a7f3d0" onclick="toggleAI()">${icon('x')}</button></div>
+    <div class="ai-msgs" id="aiMsgs">${msgs||`<div class="bubble a">مرحباً 👋 أنا مساعد المكتب. اسألني عن المعاملات، أو اطلب مني الفرز والترتيب وفتح معاملة أو صياغة كتاب أو رسالة واتساب. مثال: "أظهر الحالات العاجلة في بغداد" أو "افتح المعاملة IQ-2026-4891".</div>`}${state.ai.busy?'<div class="bubble a pulse">...يكتب</div>':''}</div>
+    <div class="ai-in"><input id="aiInput" placeholder="${AI.ready()?'اكتب سؤالك أو أمرك...':'فعّل مفتاح API من الإعدادات أولاً'}" onkeydown="if(event.key==='Enter')aiSend()"><button class="btn btn-em" onclick="aiSend()">${icon('send')}</button></div>
+  </div>`;
+  const m=$('#aiMsgs'); if(m)m.scrollTop=m.scrollHeight;
+}
+async function aiSend(){
+  const inp=$('#aiInput'); if(!inp)return; const q=inp.value.trim(); if(!q)return;
+  if(!AI.ready()){ toast('فعّل مفتاح الذكاء الاصطناعي من الإعدادات', false); openSettings(); return; }
+  state.ai.messages.push({role:'user',content:q}); state.ai.busy=true; renderAIPanel();
+  try{
+    const out=await AI.ask(state.ai.messages);
+    const {text,actions}=AI.parseActions(out);
+    state.ai.messages.push({role:'assistant',content:text||'تم.'}); state.ai.busy=false; renderAIPanel();
+    if(actions&&actions.length){ executeActions(actions); }
+  }catch(e){ state.ai.busy=false; state.ai.messages.push({role:'assistant',content:'تعذّر الاتصال: '+e.message}); renderAIPanel(); }
+}
+
+/* ---------------------------------- الإقلاع ---------------------------------- */
+window.addEventListener('online',()=>{ state.online=true; render(); GAS.push(); });
+window.addEventListener('offline',()=>{ state.online=false; render(); });
+async function boot(){
+  Store.load();
+  // تفعيل تلقائي عند فتح رابط #go=
+  const h = location.hash || '';
+  if(/[#&]go=/.test(h) || /NBL1\./.test(h)){
+    try{ await LIC.activate(h); history.replaceState(null,'', location.pathname+location.search); }catch(e){ /* يظهر في شاشة التفعيل */ }
+  }
+  let ev = await LIC.evaluate();
+  // عند الإقلاع والاتصال متاح: جرّب تحقق الخادم إن كان الترخيص بحاجة تجديد أو موقوفاً
+  if(ev.state!=='active' && ev.state!=='grace' && LIC.stored() && state.online){
+    try{ const r=await LIC.refresh(true); if(r) ev=r; }catch(e){}
+  }
+  if(ev.state!=='active' && ev.state!=='grace'){ renderActivation(ev); return; }
+  render();
+  if(ev.state==='grace'){ toast('الترخيص يعمل ضمن مهلة السماح ('+(ev.graceLeft||'')+' يوم) — اتصل بالإنترنت للتجديد', false); }
+  // تحقق دوري كل 6 ساعات في الخلفية
+  if(state.online){ LIC.refresh(false).then(r=>{ if(r && r.state!=='active' && r.state!=='grace') renderActivation(r); }); }
+  if(state.settings.gasUrl && state.online){ GAS.pull().then(r=>{ if(r.ok) render(); }); }
+}
+boot();
+
+</script>
+</body>
+</html>
