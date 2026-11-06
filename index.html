@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 <meta name="theme-color" content="#064e3b" />
-<title>منظومة إدارة المعاملات</title>
-<meta name="description" content="منظومة ذكية عامة لإدارة وفرز طلبات ومعاملات المستفيدين لأي جهة، مع تدقيق المستمسكات بالذكاء الاصطناعي، الباركود، والمراسلة عبر واتساب. تعمل على أي جهاز وتُربط بكوكل سكربت." />
+<title>منظومة إدارة المعاملات والطلبات</title>
+<meta name="description" content="منظومة ذكية عامة لإدارة وفرز طلبات ومعاملات المواطنين لأي جهة، مع تدقيق المستمسكات بالذكاء الاصطناعي، الباركود، والمراسلة عبر واتساب. تعمل على أي جهاز وتُربط بكوكل سكربت." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -190,15 +190,15 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
 <script>
 "use strict";
 /* =========================================================================
-   منظومة إدارة المعاملات · الجهة
+   منظومة إدارة المعاملات والطلبات · الجهة
    تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
    ========================================================================= */
 const APP = {
-  version: '2.2.0',
-  name: 'منظومة إدارة المعاملات',
+  version: '3.0.0',
+  name: 'منظومة إدارة المعاملات والطلبات',
   masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
   office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
-  brandLine: 'أ.م. أحمد الربيعي للحلول الهندسية'
+  brandLine: ''
 };
 // علامة محايدة بدل الشعار الرسمي (يمكن ضبط شعار الجهة لاحقاً من الترخيص)
 function brandMark(sz){ const s=sz||40; return `<div class="brandmark" style="width:${s}px;height:${s}px">${icon('building','ic')}</div>`; }
@@ -221,13 +221,26 @@ function toast(msg, ok=true){
 function normalizePhone(p){ let c=String(p||'').replace(/\D/g,''); if(c.startsWith('00964'))c=c.slice(5); if(c.startsWith('964'))c=c.slice(3); if(c.startsWith('0'))c=c.slice(1); return '964'+c; }
 function waLink(phone,text){ return 'https://wa.me/'+normalizePhone(phone)+'?text='+encodeURIComponent(text); }
 
-/* ---------- الحالة العامة ---------- */
-const STATUSES = ['مستلم','قيد التدقيق','بانتظار مستمسكات','أحيل بكتاب رسمي','قيد المتابعة بالوزارة','منجز وموافق عليه','معتذر عنه'];
-const STATUS_CLASS = {'مستلم':'st-recv','قيد التدقيق':'st-rev','بانتظار مستمسكات':'st-wait','أحيل بكتاب رسمي':'st-sent','قيد المتابعة بالوزارة':'st-follow','منجز وموافق عليه':'st-done','معتذر عنه':'st-rej'};
-const GOVS = ['بغداد','البصرة','نينوى','أربيل','النجف الأشرف','كربلاء المقدسة','ذي قار','بابل','الأنبار','كركوك','ديالى','صلاح الدين','واسط','ميسان','المثنى','القادسية (الديوانية)','السليمانية','دهوك'];
-const MINISTRIES = ['وزارة العمل والشؤون الاجتماعية','وزارة الصحة','وزارة الإعمار والإسكان والبلديات','مؤسسة الشهداء','مؤسسة السجناء السياسيين','وزارة الدفاع','وزارة الداخلية','وزارة التعليم العالي والبحث العلمي','وزارة التربية','وزارة الكهرباء','وزارة النفط','أمانة بغداد','ديوان المحافظة'];
-const CATEGORIES = ['الرعاية والضمان الاجتماعي','العلاج واللجان الطبية','الإعمار وتخصيص الأراضي','حقوق الشهداء والجرحى','التربية والتعليم العالي','قوى الأمن والداخلية والدفاع','خدمات وبلديات وشبكات ماء'];
-const URGENCIES = ['عاجل جداً','متوسط','عادي'];
+/* ---------- التصنيفات (معتمدة من بيانات الميدان الحقيقية) ---------- */
+const STATUSES = ['جديد','مفرز — ضمن كتاب/ملف موحّد','كتاب ينتظر التوقيع','أُحيل بكتاب رسمي','قيد المتابعة','يحتاج استكمالاً','بانتظار مستند أو توضيح','منجز','خارج الاختصاص — إرشاد','معتذر عنه'];
+const STATUS_CLASS = {'جديد':'st-recv','مفرز — ضمن كتاب/ملف موحّد':'st-follow','كتاب ينتظر التوقيع':'st-rev','أُحيل بكتاب رسمي':'st-sent','قيد المتابعة':'st-follow','يحتاج استكمالاً':'st-wait','بانتظار مستند أو توضيح':'st-wait','منجز':'st-done','خارج الاختصاص — إرشاد':'urg-low','معتذر عنه':'st-rej'};
+const GOVS = ['البصرة','ذي قار','بغداد','النجف','نينوى','ديالى','ميسان','واسط','كركوك','الأنبار','صلاح الدين','كربلاء','المثنى','الديوانية','بابل','أربيل','السليمانية','دهوك','أخرى'];
+// أنواع الطلبات (المناشدات) — من الميدان
+const REQUEST_TYPES = ['تعيين أو تثبيت','راتب أو تقاعد أو رعاية اجتماعية','تعليم أو جامعة','معاملة متوقفة في دائرة','أرض أو سكن','تعويض أو حقوق','مشروع أو مطلب عام لمنطقة','خدمة بلدية (ماء، كهرباء، مجاري، طرق)','شكوى من موظف أو جهة','علاج أو إحالة طبية','تعيين','تثبيت','تقييم','نقل','مناشدة عامة','أخرى'];
+// شروط فرعية للطلبات الحكومية المتكررة
+const SUBREQUIREMENTS = {
+  'راتب أو تقاعد أو رعاية اجتماعية':['إعانة معيل/أسرة','احتساب راتب جديد','يحتاج باحث ميداني','إصدار بطاقة ذكية (كي كارد)','شمول ذوي إعاقة'],
+  'تعيين أو تثبيت':['تعيين جديد','تثبيت على الملاك','نقل/إعادة','عقد إلى دائم'],
+  'أرض أو سكن':['قطعة أرض سكنية','قرض إسكان','تجاوز/إزالة','تخصيص بلدي'],
+  'علاج أو إحالة طبية':['علاج داخل العراق','إحالة خارج العراق','لجنة طبية','دواء/مستلزمات']
+};
+// الجهات المعنية (للتوحيد الذكي عند اختلاف الكتابة)
+const ENTITIES = ['وزارة العمل والشؤون الاجتماعية','هيئة الحماية الاجتماعية','وزارة التربية','وزارة التعليم العالي والبحث العلمي','وزارة الصحة','وزارة المالية','هيئة التقاعد الوطنية','وزارة الإعمار والإسكان والبلديات','وزارة الداخلية','وزارة الدفاع','وزارة الكهرباء','وزارة النفط','وزارة الموارد المائية','مؤسسة الشهداء','مؤسسة السجناء السياسيين','محافظة البصرة','مجلس الوزراء','ديوان الرقابة المالية','الأمانة العامة لمجلس الوزراء'];
+const MINISTRIES = ENTITIES;
+const CATEGORIES = REQUEST_TYPES;
+const URGENCIES = ['عاجل','عالٍ','متوسط','اعتيادي'];
+const SCOPES = ['فرد','مجموعة / أهالي منطقة'];
+const CHANNELS = ['الرابط العام','رابط الموظفين','استقبال مباشر','مكتب الرعاية الاجتماعية'];
 
 const state = {
   mode: 'citizen',           // citizen | office
@@ -235,12 +248,14 @@ const state = {
   session: JSON.parse(localStorage.getItem('naib_session')||'null'),
   requests: [],
   settings: JSON.parse(localStorage.getItem('naib_settings')||'{}'),
-  filters: { q:'', gov:'الكل', ministry:'الكل', urgency:'الكل', docs:'الكل', status:'الكل' },
+  filters: { q:'', gov:'الكل', type:'الكل', office:'الكل', urgency:'الكل', status:'الكل' },
   online: navigator.onLine,
   ai: { open:false, busy:false, messages:[] }
 };
 state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office }, state.settings);
 if(state.settings.geminiModel==='gemini-1.5-flash'||state.settings.geminiModel==='gemini-pro'||!state.settings.geminiModel){ state.settings.geminiModel='gemini-flash-latest'; }
+// تنظيف أي اسم جهة قديم محفوظ من إصدارات سابقة (يعود الاسم محايداً حتى يضبطه رابط الترخيص)
+if(state.settings.officeName && /(مكتب|النائب|شؤون المواطن)/.test(state.settings.officeName)){ state.settings.officeName=''; }
 function saveSettings(){ localStorage.setItem('naib_settings', JSON.stringify(state.settings)); }
 
 /* ===========================================================================
@@ -346,10 +361,18 @@ const Barcode = (function(){
 const Store = {
   load(){ try{ const d=JSON.parse(localStorage.getItem('naib_requests')); if(Array.isArray(d)&&d.length){ state.requests=d; return; } }catch(e){} state.requests = SEED.slice(); this.persist(); },
   persist(){ localStorage.setItem('naib_requests', JSON.stringify(state.requests)); },
-  byTracking(t){ t=String(t||'').trim().toLowerCase(); return state.requests.find(r=> r.trackingId.toLowerCase()===t || r.phone===t || r.nationalId===t); },
+  byTracking(t){ t=String(t||'').trim().toLowerCase(); return state.requests.find(r=> r.trackingId.toLowerCase()===t || r.phone===t || (r.accessAccount&&r.accessAccount.accessCode&&r.accessAccount.accessCode.toLowerCase()===t)); },
   upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(state.settings.gasUrl) GAS.push(); },
-  stats(){ const s={total:state.requests.length,received:0,underReview:0,waitingDocs:0,dispatched:0,approved:0}; state.requests.forEach(r=>{ if(r.status==='مستلم')s.received++; if(r.status==='قيد التدقيق')s.underReview++; if(r.status==='بانتظار مستمسكات')s.waitingDocs++; if(r.status==='أحيل بكتاب رسمي')s.dispatched++; if(r.status==='منجز وموافق عليه')s.approved++; }); return s; },
-  newTracking(){ let t; do{ t='IQ-2026-'+Math.floor(1000+Math.random()*9000); }while(state.requests.some(r=>r.trackingId===t)); return t; }
+  stats(){ const s={total:state.requests.length,neww:0,waitingDocs:0,letters:0,done:0,sorted:0}; state.requests.forEach(r=>{ if(r.status==='جديد')s.neww++; if(r.status==='يحتاج استكمالاً'||r.status==='بانتظار مستند أو توضيح')s.waitingDocs++; if(r.status==='كتاب ينتظر التوقيع'||r.status==='أُحيل بكتاب رسمي')s.letters++; if(r.status==='منجز')s.done++; if(r.status==='مفرز — ضمن كتاب/ملف موحّد')s.sorted++; }); return s; },
+  newTracking(){ let n=0; state.requests.forEach(r=>{ const m=/CIT-2026-(\d+)/.exec(r.trackingId||''); if(m) n=Math.max(n, parseInt(m[1],10)); }); return 'CIT-2026-'+String(n+1).padStart(6,'0'); },
+  importRestore(obj, mode){ // mode: 'replace' | 'merge'
+    let arr = Array.isArray(obj)?obj:(obj&&obj.requests)||[]; arr=arr.filter(r=>r&&r.trackingId);
+    if(!arr.length) return 0;
+    if(mode==='merge'){ const byId={}; state.requests.forEach(r=>byId[r.trackingId]=r); arr.forEach(r=>byId[r.trackingId]=r); state.requests=Object.values(byId); }
+    else state.requests=arr;
+    this.persist(); return arr.length;
+  },
+  exportBackup(){ return JSON.stringify({app:'naib',type:'backup',version:APP.version,exportedAt:nowStr(),count:state.requests.length,requests:state.requests}); }
 };
 
 /* مزامنة كوكل سكربت ثنائية الاتجاه */
@@ -401,12 +424,12 @@ function heuristicAudit(category, title, description, docs){
     summary:`تم تدقيق المعاملة وفق الضوابط والتعليمات الوزارية النافذة لسنة 2026. الحالة: ${completeness>=80?'جاهزة للإحالة':'تحتاج استكمال مستمسكات'}.`,
     completenessRate: completeness, missingDocsSummary: missing,
     priorityReason: /عاجل|طفل|وفاة|عجز/.test(lower)?'حالة إنسانية ملحة تتطلب تدخلاً سريعاً':'إجراءات معاملة إدارية روتينية',
-    suggestedAction: missing.length?'مراسلة المستفيد عبر واتساب لتزويدنا بالمستمسكات الناقصة فوراً':'إصدار كتاب رسمي وتوقيعه من الجهة المختصة وإحالته للجهة المعنية',
+    suggestedAction: missing.length?'مراسلة المواطن عبر واتساب لتزويدنا بالمستمسكات الناقصة فوراً':'إصدار كتاب رسمي وتوقيعه من الجهة المختصة وإحالته للجهة المعنية',
     targetDirectorate: /رعاية/.test(category)?'هيئة الحماية الاجتماعية / وزارة العمل': /صحة/.test(category)?'دائرة العمليات والخدمات الطبية / وزارة الصحة': /شهداء/.test(category)?'مؤسسة الشهداء':'الجهة المعنية ذات الاختصاص'
   };
 }
 function slaInfo(submittedAt, status){
-  const done = status==='منجز وموافق عليه'||status==='معتذر عنه';
+  const done = status==='منجز'||status==='معتذر عنه'||status==='خارج الاختصاص — إرشاد';
   const d = new Date((submittedAt||'').replace(' ','T')); const days = Math.floor((Date.now()-d.getTime())/864e5);
   return { days: isNaN(days)?0:days, isOverdue: !done && days>7 };
 }
@@ -418,16 +441,16 @@ function overdueCount(){ return state.requests.filter(r=>slaInfo(r.submittedAt,r
 const AI = {
   ready(){ const s=state.settings; return s.aiProvider==='gemini' ? !!s.geminiKey : !!s.claudeKey; },
   dataSnapshot(){
-    return state.requests.map(r=>({ رمز:r.trackingId, مواطن:r.citizenName, هاتف:r.phone, محافظة:r.governorate, قطاع:r.category, وزارة:r.targetMinistry, عنوان:r.title, حالة:r.status, أسبقية:r.urgency, نواقص:(r.aiAnalysis&&r.aiAnalysis.missingDocsSummary)||[], تقديم:r.submittedAt }));
+    return state.requests.slice(0,400).map(r=>({ رمز:r.trackingId, مواطن:r.citizenName, هاتف:r.phone, محافظة:r.governorate, قضاء:r.district, نوع:r.requestType, جهة:r.targetEntity, طلب:r.title, حالة:r.status, أولوية:r.urgency, نطاق:r.scope, مكتب:r.office, موظف:r.receptionEmployee, تقديم:r.submittedAt }));
   },
   systemPrompt(){
-    return `أنت "مساعد إدارة المعاملات" الذكي داخل منظومة إدارة المعاملات. مهمتك مساعدة الموظف في البحث والفرز وتحليل طلبات المستفيدين وتنفيذ الأوامر داخل البرنامج.
+    return `أنت "مساعد إدارة المعاملات" الذكي داخل منظومة إدارة المعاملات والطلبات. مهمتك مساعدة الموظف في البحث والفرز وتحليل طلبات المواطنين وتنفيذ الأوامر داخل البرنامج.
 لديك بيانات المعاملات التالية (JSON): ${JSON.stringify(this.dataSnapshot())}
 أجب دائماً باللغة العربية وبشكل موجز ومهني.
 عندما يطلب المستخدم إجراءً داخل البرنامج، أعد في نهاية ردك كتلة أوامر JSON بين وسمين <ACT> و </ACT> تحتوي مصفوفة "actions". الأنواع المدعومة:
-- {"type":"filter","status":"...","governorate":"...","urgency":"...","category":"...","ministry":"...","q":"نص بحث"} لفرز وعرض المعاملات (استخدم القيم الموجودة فعلاً).
+- {"type":"filter","status":"...","governorate":"...","urgency":"عاجل|عالٍ|متوسط|اعتيادي","requestType":"...","q":"نص بحث"} لفرز وعرض الطلبات (استخدم القيم الموجودة فعلاً).
 - {"type":"sort","by":"urgency|date|status"} لترتيب القائمة.
-- {"type":"open","trackingId":"IQ-2026-XXXX"} لفتح تفاصيل معاملة.
+- {"type":"open","trackingId":"CIT-2026-XXXXXX"} لفتح تفاصيل طلب.
 - {"type":"draft_whatsapp","trackingId":"...","kind":"missing_docs|status|approved"} لتوليد رسالة واتساب.
 - {"type":"draft_letter","trackingId":"..."} لتوليد كتاب رسمي.
 - {"type":"audit","trackingId":"..."} لإعادة تدقيق المستمسكات.
@@ -516,23 +539,7 @@ const AI = {
 };
 
 /* =====================  البيانات الأولية (نماذج واقعية)  ===================== */
-const SEED = [
-{ id:'req-1', trackingId:'IQ-2026-4891', citizenName:'حيدر جاسم كاظم الزبيدي', nationalId:'198421094821', phone:'07801458920', governorate:'بغداد', district:'مدينة الصدر - قطاع 42', category:'الرعاية والضمان الاجتماعي', targetMinistry:'وزارة العمل والشؤون الاجتماعية', title:'طلب شمول براتب الإعانة الاجتماعية والمعين المتفرغ لطفل معاق', description:'المعيل الوحيد لأسرة من 5 أفراد، ولديه طفل مصاب بالشلل الدماغي الرباعي بنسبة عجز 100%. يرجى التدخل للشمول براتب الحماية وإصدار ماستر كارد المعين المتفرغ.', urgency:'عاجل جداً', status:'أحيل بكتاب رسمي', submittedAt:'2026-10-24 10:30', updatedAt:'2026-11-02 14:15', officialLetterNumber:'م.ن/2026/1842', officialLetterDate:'2026-11-01', officialReplySummary:'إحالة الطلب إلى هيئة رعاية ذوي الإعاقة مع تأييد الحالة الإنسانية للنظر بالأولوية القصوى.',
-  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة للأب',value:'198421094821',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'بطاقة السكن المحدثة',value:'ص/42/1180',status:'verified',required:true,issuer:'مكتب معلومات الصدر'},{id:'d3',name:'التقرير الطبي للجنة الاستشارية (العجز)',status:'verified',required:true,issuer:'دائرة صحة بغداد الرصافة'},{id:'d4',name:'تأييد عدم وجود راتب أو تقاعد',status:'missing',required:true,issuer:'هيئة التقاعد الوطنية'}],
-  timeline:[{id:'t1',timestamp:'2026-10-24 10:30',title:'استلام المعاملة وتسجيلها',description:'استلام أوراق المستفيد ومنحه رمز التتبع.',actor:'الجهة المستلِمة',status:'completed'},{id:'t2',timestamp:'2026-10-26 11:00',title:'تدقيق المستمسكات وفحص الذكاء الاصطناعي',description:'فحص التقرير الطبي واستخراج نقص تأييد التقاعد.',actor:'وحدة التدقيق القانوني',status:'completed'},{id:'t3',timestamp:'2026-11-01 09:45',title:'صدور كتاب رسمي بتوقيع الجهة المختصة',description:'الكتاب م.ن/2026/1842 موجه إلى وزير العمل.',actor:'الجهة المختصة',status:'completed'},{id:'t4',timestamp:'2026-11-03 13:00',title:'قيد المتابعة لدى هيئة ذوي الإعاقة',description:'متابعة الكتاب مع رئاسة الهيئة.',actor:'معتمد المكتب',status:'current'},{id:'t5',timestamp:'',title:'إصدار بطاقة الماستر كارد والشمول',description:'استلام البطاقة الذكية وصرف المستحقات.',actor:'مصرف الرافدين / الهيئة',status:'pending'}],
-  aiAnalysis:{summary:'حالة إنسانية ملحة لطفل معاق رباعي بنسبة 100%. تستوفي معايير قانون رقم 38 لسنة 2013.',completenessRate:75,missingDocsSummary:['تأييد عدم وجود راتب تقاعدي للأب صادر من هيئة التقاعد'],priorityReason:'عجز طبي حرج وأسرة معدومة الدخل.',suggestedAction:'استعجال هيئة ذوي الإعاقة لإصدار كتاب الإحالة وتخصيص الماستر كارد.',targetDirectorate:'هيئة رعاية ذوي الإعاقة / وزارة العمل'},
-  staffNotes:'تم الاتصال بالمستفيد وإبلاغه بمتابعة الكتاب في الهيئة.', accessAccount:{username:'IQ-2026-4891',accessCode:'IQ4891',generatedAt:'2026-10-24 10:30'} },
-{ id:'req-2', trackingId:'IQ-2026-5219', citizenName:'زينب عمار عبد الحسين الخفاجي', nationalId:'199248102941', phone:'07711233445', governorate:'النجف الأشرف', district:'حي السعد', category:'العلاج واللجان الطبية', targetMinistry:'وزارة الصحة', title:'طلب إحالة للعلاج خارج العراق لحالة ورم دماغي', description:'مريضة بورم دماغي تحتاج إحالة عاجلة للعلاج خارج العراق على نفقة الدولة، وقد صدر قرار اللجنة الطبية الأولية.', urgency:'عاجل جداً', status:'بانتظار مستمسكات', submittedAt:'2026-10-29 09:10', updatedAt:'2026-10-31 12:00',
-  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة',value:'199248102941',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'قرار اللجنة الطبية المركزية للإخلاء',status:'missing',required:true,issuer:'مدينة الطب'},{id:'d3',name:'جواز سفر نافذ للمريضة والمرافق',status:'missing',required:true,issuer:'مديرية الجوازات'}],
-  timeline:[{id:'t1',timestamp:'2026-10-29 09:10',title:'استلام المعاملة',description:'تسجيل الطلب ومنح رمز التتبع.',actor:'الجهة المستلِمة',status:'completed'},{id:'t2',timestamp:'2026-10-31 12:00',title:'تدقيق المستمسكات',description:'تبيّن نقص قرار الإخلاء المركزي وجواز السفر.',actor:'وحدة التدقيق',status:'current'},{id:'t3',timestamp:'',title:'إصدار كتاب رسمي',description:'مخاطبة دائرة العمليات والخدمات الطبية.',actor:'الجهة المختصة',status:'pending'}],
-  aiAnalysis:{summary:'حالة مرضية حرجة تتطلب استكمال قرار الإخلاء الطبي المركزي.',completenessRate:50,missingDocsSummary:['قرار اللجنة الطبية المركزية للإخلاء','جواز سفر نافذ للمريضة والمرافق'],priorityReason:'ورم دماغي — خطر على الحياة.',suggestedAction:'مراسلة المستفيدة لاستكمال قرار الإخلاء وجواز السفر فوراً.',targetDirectorate:'دائرة العمليات والخدمات الطبية / وزارة الصحة'},
-  staffNotes:'', accessAccount:{username:'IQ-2026-5219',accessCode:'IQ5219',generatedAt:'2026-10-29 09:10'} },
-{ id:'req-3', trackingId:'IQ-2026-6104', citizenName:'علي فاضل محمود الدليمي', nationalId:'199510338201', phone:'07901557788', governorate:'الأنبار', district:'الرمادي - التأميم', category:'الإعمار وتخصيص الأراضي', targetMinistry:'وزارة الإعمار والإسكان والبلديات', title:'طلب تخصيص قطعة أرض سكنية ضمن قطع الموظفين', description:'موظف حكومي لا يملك داراً ولم يسبق له الحصول على قطعة أرض، يطلب شموله بتوزيع قطع أراضي الموظفين.', urgency:'متوسط', status:'قيد التدقيق', submittedAt:'2026-11-01 08:45', updatedAt:'2026-11-01 08:45',
-  documents:[{id:'d1',name:'البطاقة الوطنية الموحدة',status:'verified',required:true,issuer:'الأحوال المدنية'},{id:'d2',name:'تأييد البلدية بعدم استلام أرض سابقاً',status:'missing',required:true,issuer:'بلدية الرمادي'}],
-  timeline:[{id:'t1',timestamp:'2026-11-01 08:45',title:'استلام المعاملة',description:'تسجيل الطلب ومنح رمز التتبع.',actor:'الجهة المستلِمة',status:'current'}],
-  aiAnalysis:{summary:'طلب إداري روتيني لتخصيص أرض، ينقصه تأييد البلدية.',completenessRate:70,missingDocsSummary:['تأييد البلدية بعدم استلام قطعة أرض سابقاً'],priorityReason:'إجراءات معاملة إدارية روتينية.',suggestedAction:'مراسلة المستفيد لتزويدنا بتأييد البلدية.',targetDirectorate:'دائرة البلديات / وزارة الإعمار'},
-  staffNotes:'', accessAccount:{username:'IQ-2026-6104',accessCode:'IQ6104',generatedAt:'2026-11-01 08:45'} }
-];
+const SEED = [{"id": "req-CIT-2026-000001", "trackingId": "CIT-2026-000001", "citizenName": "علي زيدان", "phone": "07802001796", "governorate": "البصرة", "district": "الدير", "requestType": "راتب أو تقاعد أو رعاية اجتماعية", "targetEntity": "التربيه", "title": "المواطن يريد تعين وكلش", "description": "المواطن يريد تعين وكلش", "scope": "", "documentState": "غير مُدخل", "documents": [], "receptionEmployee": "عباس", "office": "", "channel": "رابط الموظفين", "status": "خارج الاختصاص — إرشاد", "urgency": "اعتيادي", "suggestedAction": "(ز) إرشاد المواطن دون كتاب + إعادة إدخال الطلب", "unifiedFile": "", "letterInfo": "لا كتاب", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-13 19:13", "updatedAt": "2026-10-13 19:13", "timeline": [{"id": "t1", "timestamp": "2026-10-13 19:13", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: عباس", "actor": "غير مُدخل / غير محدد", "status": "completed"}, {"id": "t2", "timestamp": "2026-10-13 19:13", "title": "الفرز والتصنيف", "description": "(ز) إرشاد المواطن دون كتاب + إعادة إدخال الطلب", "actor": "وحدة الفرز", "status": "current"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000001", "accessCode": "CIT0001", "generatedAt": "2026-10-13 19:13"}}, {"id": "req-CIT-2026-000002", "trackingId": "CIT-2026-000002", "citizenName": "محمد صادق", "phone": "07744433223", "governorate": "البصرة", "district": "البصره", "requestType": "تعليم أو جامعة", "targetEntity": "التعليم العالي", "title": "قبول مسائي", "description": "قبول مسائي", "scope": "فرد", "documentState": "نعم — سيرسله لاحقاً", "documents": [{"id": "d0", "name": "مستند (سيُرسل لاحقاً)", "value": "", "status": "missing", "required": true}], "receptionEmployee": "ماحد عواد", "office": "", "channel": "رابط الموظفين", "status": "يحتاج استكمالاً", "urgency": "اعتيادي", "suggestedAction": "(و) استكمال مستند وبيانات ثم يُعاد الفرز", "unifiedFile": "GRP-2026-000008", "letterInfo": "لا كتاب", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-13 19:55", "updatedAt": "2026-10-13 19:55", "timeline": [{"id": "t1", "timestamp": "2026-10-13 19:55", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: ماحد عواد", "actor": "غير مُدخل / غير محدد", "status": "completed"}, {"id": "t2", "timestamp": "2026-10-13 19:55", "title": "الفرز والتصنيف", "description": "(و) استكمال مستند وبيانات ثم يُعاد الفرز", "actor": "وحدة الفرز", "status": "current"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000002", "accessCode": "CIT0002", "generatedAt": "2026-10-13 19:55"}}, {"id": "req-CIT-2026-000003", "trackingId": "CIT-2026-000003", "citizenName": "ماجد", "phone": "07806969804", "governorate": "البصرة", "district": "ابي الخصيب", "requestType": "تعيين أو تثبيت", "targetEntity": "بغداد", "title": "اريد تعيين", "description": "اريد تعيين", "scope": "فرد", "documentState": "لا", "documents": [], "receptionEmployee": "علي", "office": "OFF-21 مكتب ساحة سعد", "channel": "رابط الموظفين", "status": "خارج الاختصاص — إرشاد", "urgency": "اعتيادي", "suggestedAction": "(ز) إرشاد المواطن دون كتاب", "unifiedFile": "", "letterInfo": "لا كتاب", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-14 02:53", "updatedAt": "2026-10-14 02:53", "timeline": [{"id": "t1", "timestamp": "2026-10-14 02:53", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: علي", "actor": "OFF-21 مكتب ساحة سعد", "status": "completed"}, {"id": "t2", "timestamp": "2026-10-14 02:53", "title": "الفرز والتصنيف", "description": "(ز) إرشاد المواطن دون كتاب", "actor": "وحدة الفرز", "status": "current"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000003", "accessCode": "CIT0003", "generatedAt": "2026-10-14 02:53"}}, {"id": "req-CIT-2026-000004", "trackingId": "CIT-2026-000004", "citizenName": "ادارة مكتب البراضعية", "phone": "07728338021", "governorate": "البصرة", "district": "مناوي باشا / مقابل المصرف الأهلي العراقي", "requestType": "أخرى", "targetEntity": "المكتب المركزي للنائب رئيس اللجنة المالية عدي عواد", "title": "الحصول على لابتوب للدراسة في الجامعة", "description": "الحصول على لابتوب للدراسة في الجامعة", "scope": "فرد", "documentState": "لا", "documents": [], "receptionEmployee": "ادارة مكتب البراضعية", "office": "OFF-20 مكتب البراضعية", "channel": "رابط الموظفين", "status": "خارج الاختصاص — إرشاد", "urgency": "اعتيادي", "suggestedAction": "(ز) إرشاد + عرض على المكتب ضمن سياسة المساعدات إن وُجدت", "unifiedFile": "GRP-2026-000008", "letterInfo": "لا كتاب", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-14 18:34", "updatedAt": "2026-10-14 18:34", "timeline": [{"id": "t1", "timestamp": "2026-10-14 18:34", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: ادارة مكتب البراضعية", "actor": "OFF-20 مكتب البراضعية", "status": "completed"}, {"id": "t2", "timestamp": "2026-10-14 18:34", "title": "الفرز والتصنيف", "description": "(ز) إرشاد + عرض على المكتب ضمن سياسة المساعدات إن وُجدت", "actor": "وحدة الفرز", "status": "current"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000004", "accessCode": "CIT0004", "generatedAt": "2026-10-14 18:34"}}, {"id": "req-CIT-2026-000005", "trackingId": "CIT-2026-000005", "citizenName": "زهراء أسعد صباح عبد الرضا", "phone": "07758660187", "governorate": "البصرة", "district": "الهارثة", "requestType": "تعليم أو جامعة", "targetEntity": "وزارة الترية", "title": "للتفضل بالموافقة على استثناء الطالبة (زهراء أ", "description": "للتفضل بالموافقة على استثناء الطالبة (زهراء أسعد صباح عبد الرضا)، خريجة الدراسة الإعدادية / الفرع العلمي، وقبولها في جامعة وارث الأنبياء / كلية الهندسة / قسم هندسة النفط والغاز، علماً أن معدلها (59.57)، ولرغبتها الشديدة في دراسة هذا الاختصاص.\n\nمع فائق الشكر وأوفر الاحترام", "scope": "فرد", "documentState": "نعم — سيرسله لاحقاً", "documents": [{"id": "d0", "name": "مستند (سيُرسل لاحقاً)", "value": "", "status": "missing", "required": true}], "receptionEmployee": "مكتب الشهداء", "office": "", "channel": "رابط الموظفين", "status": "خارج الاختصاص — إرشاد", "urgency": "اعتيادي", "suggestedAction": "(ز) إرشاد المواطنة دون كتاب", "unifiedFile": "GRP-2026-000008", "letterInfo": "لا كتاب", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-14 19:29", "updatedAt": "2026-10-14 19:29", "timeline": [{"id": "t1", "timestamp": "2026-10-14 19:29", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: مكتب الشهداء", "actor": "مكتب الشهداء (غير معتمد)", "status": "completed"}, {"id": "t2", "timestamp": "2026-10-14 19:29", "title": "الفرز والتصنيف", "description": "(ز) إرشاد المواطنة دون كتاب", "actor": "وحدة الفرز", "status": "current"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000005", "accessCode": "CIT0005", "generatedAt": "2026-10-14 19:29"}}, {"id": "req-CIT-2026-000006", "trackingId": "CIT-2026-000006", "citizenName": "علي كريم جاسب", "phone": "07831747479", "governorate": "البصرة", "district": "البصره", "requestType": "راتب أو تقاعد أو رعاية اجتماعية", "targetEntity": "وزارة العمل", "title": "تقديم على راتب رعايه + معين", "description": "تقديم على راتب رعايه + معين", "scope": "فرد", "documentState": "لا", "documents": [], "receptionEmployee": "محمد رعد", "office": "", "channel": "رابط الموظفين", "status": "جديد", "urgency": "متوسط", "suggestedAction": "(ب) ضمّه إلى الملف الموحد GRP-2026-000001 وكتاب واحد للجهة", "unifiedFile": "GRP-2026-000001", "letterInfo": "وزارة العمل والشؤون الاجتماعية / هيئة الحماية الاجتماعية — فرع البصرة", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-14 20:46", "updatedAt": "2026-10-14 20:46", "timeline": [{"id": "t1", "timestamp": "2026-10-14 20:46", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: محمد رعد", "actor": "غير مُدخل / غير محدد", "status": "completed"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000006", "accessCode": "CIT0006", "generatedAt": "2026-10-14 20:46"}}, {"id": "req-CIT-2026-000010", "trackingId": "CIT-2026-000010", "citizenName": "حسين علي خلف", "phone": "07765866734", "governorate": "البصرة", "district": "البصرة", "requestType": "تعليم أو جامعة", "targetEntity": "وزارة التربية", "title": "بسم الله الرحمن الرحيم\n\n\n\n\n\n**إلى / المديرية ", "description": "بسم الله الرحمن الرحيم\n\n\n\n\n\n**إلى / المديرية العامة لتربية البصرة**  \n**قسم / التعليم الإلزامي**\n\n**م / طلب شمول تلميذ بالتعليم الإلزامي**\n\nتحية طيبة...\n\nنود إعلامكم بأن التلميذ **حسين علي خلف**، أحد تلاميذ مدرستنا في الصف الخامس الابتدائي، من مواليد **٢٠١١/١٠/٢٩**، وإن أقرانه من نفس العمر يدرسون في الصف الرابع الإعدادي.\n\nلذا نرجو التفضل بالنظر في إمكانية شموله بالتعليم الإلزامي، مع استمراره في الدراسة في **مدرسة التحدي الابتدائية للبنين** وبقائه في مدرسته الحالية دون نقل إلى مدرسة أخرى، واتخاذ ما يلزم وفق الضوابط والتعليمات المعمول بها.\n\nراجين تعاونكم وتفضلكم بالموافقة، مع فائق الشكر والتقدير.\n\n+964 776 586 6734", "scope": "فرد", "documentState": "نعم — سيرسله لاحقاً", "documents": [{"id": "d0", "name": "مستند (سيُرسل لاحقاً)", "value": "", "status": "missing", "required": true}], "receptionEmployee": "مكتب الشهداء", "office": "", "channel": "رابط الموظفين", "status": "جديد", "urgency": "عالٍ", "suggestedAction": "(أ) كتاب خدمي إلى الجهة", "unifiedFile": "", "letterInfo": "المديرية العامة لتربية البصرة", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-14 21:00", "updatedAt": "2026-10-14 21:00", "timeline": [{"id": "t1", "timestamp": "2026-10-14 21:00", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: مكتب الشهداء", "actor": "مكتب الشهداء (غير معتمد)", "status": "completed"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000010", "accessCode": "CIT0010", "generatedAt": "2026-10-14 21:00"}}, {"id": "req-CIT-2026-000011", "trackingId": "CIT-2026-000011", "citizenName": "عبدالرزاق ضياء طة ياسين", "phone": "07712478022", "governorate": "البصرة", "district": "ابي الخصيب / مهيجران", "requestType": "أخرى", "targetEntity": "وزراة الماء", "title": "تغير جهة تنسيب من وزارة الماء الى الشباب والر", "description": "تغير جهة تنسيب من وزارة الماء الى الشباب والرياضة", "scope": "فرد", "documentState": "نعم — صُوِّر", "documents": [{"id": "d0", "name": "مستند مصوّر (مرفق)", "value": "", "status": "submitted", "required": true}], "receptionEmployee": "محمد كاظم سهيم", "office": "", "channel": "رابط الموظفين", "status": "جديد", "urgency": "عالٍ", "suggestedAction": "(أ) كتاب خدمي إلى الجهتين", "unifiedFile": "GRP-2026-000015", "letterInfo": "وزارة الموارد المائية، ونسخة إلى وزارة الشباب والرياضة", "duplicate": false, "reviewFlag": false, "registryIn": "", "registryOut": "", "submittedAt": "2026-10-15 18:41", "updatedAt": "2026-10-15 18:41", "timeline": [{"id": "t1", "timestamp": "2026-10-15 18:41", "title": "استلام الطلب وتسجيله", "description": "عبر رابط الموظفين — الموظف: محمد كاظم سهيم", "actor": "مكتب الطلبة والشباب والرياضة (غير معتمد)", "status": "completed"}], "staffNotes": "", "accessAccount": {"username": "CIT-2026-000011", "accessCode": "CIT0011", "generatedAt": "2026-10-15 18:41"}}];
 
 /* =========================  تضمين الواجهة والمنطق  ========================= */
 </script>
@@ -542,12 +549,12 @@ const GAS_CODE = "/**\n * Code.gs \u2014 \u062e\u0644\u0641\u064a\u0629 \u0643\u
 
 "use strict";
 /* ===========================================================================
-   منطق الواجهة والتفاعل — منظومة إدارة المعاملات
+   منطق الواجهة والتفاعل — منظومة إدارة المعاملات والطلبات
    =========================================================================== */
 let MODAL = null; // عنصر النافذة الحالية
 
 function statusBadge(s){ return `<span class="st ${STATUS_CLASS[s]||'st-recv'}">${esc(s)}</span>`; }
-function urgBadge(u){ const c=u==='عاجل جداً'?'urg-high':u==='متوسط'?'urg-mid':'urg-low'; return `<span class="st ${c}">${esc(u)}</span>`; }
+function urgBadge(u){ if(!u)return ''; const c=(u==='عاجل'||u==='عالٍ')?'urg-high':u==='متوسط'?'urg-mid':'urg-low'; return `<span class="st ${c}">${esc(u)}</span>`; }
 
 /* --------------------- بوابة التفعيل (الترخيص السحابي الموحّد) --------------------- */
 async function renderActivation(ev){
@@ -572,22 +579,22 @@ async function renderActivation(ev){
         </div>
         <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px;margin-bottom:12px" id="actApply">${icon('key')} تفعيل هذا الجهاز الآن</button>
         <div class="field">
-          <label>اسم المكتب (لطلب الترخيص)</label>
-          <input id="actOffice" value="${esc(officeDefault)}" placeholder="مثال: مكتب النائب فلان - شؤون المستفيدين">
+          <label>اسم الجهة (لطلب الترخيص)</label>
+          <input id="actOffice" value="${esc(officeDefault)}" placeholder="مثال: اسم الجهة / الدائرة">
         </div>
         <div class="flex gap2" style="margin-bottom:6px">
           <input class="mono txt-xs" id="actDev" value="${dc}" readonly title="رمز هذا الجهاز">
           <button class="btn btn-gray shrink0" onclick="navigator.clipboard.writeText('${dc}');toast('نُسخ رمز الجهاز')">${icon('copy')}</button>
         </div>
         <button class="btn btn-wa" style="width:100%;justify-content:center;padding:11px" id="actWa">${icon('wa')} طلب الترخيص من الإدارة عبر واتساب</button>
-        <div class="center mt4 txt-xs muted2">${esc(APP.brandLine)} · ${APP.masterWhatsApp.replace('964','0')} · الإصدار ${APP.version}</div>
+        <div class="center mt4 txt-xs muted2">الإصدار ${APP.version}</div>
         <p class="center txt-xs muted2 mt2" style="line-height:1.7">الترخيص سحابي: يعمل بدون إنترنت 30 يوماً ثم 7 أيام سماح، ويتجدد تلقائياً. تُدار كل التراخيص من لوحة التحكم الموحّدة.</p>
       </div>
     </div>
   </div>`;
   $('#actWa').onclick = ()=>{
     const office = $('#actOffice').value.trim()||APP.office;
-    const msg = `طلب ترخيص ${APP.name}\n——————————\nاسم المكتب: ${office}\nرمز الجهاز: ${dc}\nالإصدار: ${APP.version}\n——————————\nيرجى إصدار رابط التفعيل من لوحة التراخيص (منتج: منظومة إدارة المعاملات).`;
+    const msg = `طلب ترخيص ${APP.name}\n——————————\nاسم الجهة: ${office}\nرمز الجهاز: ${dc}\nالإصدار: ${APP.version}\n——————————\nيرجى إصدار رابط التفعيل من لوحة التراخيص (منتج: منظومة إدارة المعاملات والطلبات).`;
     window.open(waLink(APP.masterWhatsApp, msg),'_blank');
   };
   $('#actApply').onclick = async ()=>{
@@ -618,8 +625,8 @@ function renderHeader(){
       </div>
 
       <div class="switch shrink0">
-        <button class="${!office?'on-em':''}" onclick="setMode('citizen')">${icon('user')} واجهة المستفيد</button>
-        <button class="${office?'on-dark':''}" onclick="setMode('office')">${icon('shield')} واجهة المكتب ${state.session?'<span class=dot></span>':''}</button>
+        <button class="${!office?'on-em':''}" onclick="setMode('citizen')">${icon('user')} واجهة المواطن</button>
+        <button class="${office?'on-dark':''}" onclick="setMode('office')">${icon('shield')} واجهة الإدارة ${state.session?'<span class=dot></span>':''}</button>
       </div>
 
       ${office? `<nav class="flex items-center gap4 hide-sm txt-sm sb">
@@ -630,7 +637,7 @@ function renderHeader(){
       </nav>`
       : `<nav class="flex items-center gap4 hide-sm txt-sm sb">
         <a class="navlink ${state.tab==='citizen-portal'?'active':''}" onclick="setTab('citizen-portal')">${icon('search')} أين وصل طلبي؟</a>
-        <a class="navlink" onclick="openNewRequest()">${icon('plus')} تقديم طلب جديد</a>
+        <a class="navlink" onclick="openNewRequest(true)">${icon('plus')} تقديم طلب جديد</a>
       </nav>`}
 
       <div class="flex items-center gap2 shrink0">
@@ -640,13 +647,13 @@ function renderHeader(){
           <button class="btn btn-white btn-sm" onclick="openSettings()" title="الإعدادات والذكاء الاصطناعي">${icon('cog')}</button>
           <button class="btn btn-sm ${state.settings.gasUrl?'btn-gray':''}" style="${state.settings.gasUrl?'background:var(--em-50);border-color:var(--em-300);color:var(--em-900)':'background:var(--amber-50);border:1px solid var(--amber-200);color:var(--amber-900)'}" onclick="openGas()" title="ربط كوكل سكربت">${icon('cloud')}<span class="hide-sm">${state.settings.gasUrl?'كوكل متصل':'ربط كوكل'}</span></button>
           ${state.session?`<button class="x" onclick="logout()" title="خروج">${icon('logout')}</button>`:''}
-        ` : `<button class="btn btn-em btn-sm" onclick="openNewRequest()">${icon('plus')} تقديم طلب</button>`}
+        ` : `<button class="btn btn-em btn-sm" onclick="openNewRequest(true)">${icon('plus')} تقديم طلب</button>`}
       </div>
     </div>
   </header>`;
 }
 
-/* ------------------------------- بوابة المستفيد ------------------------------- */
+/* ------------------------------- بوابة المواطن ------------------------------- */
 let citizenResult = null;
 function renderCitizen(){
   return `
@@ -655,7 +662,7 @@ function renderCitizen(){
       <div class="hero pad6" style="text-align:center">
         <div style="display:flex;justify-content:center;margin-bottom:12px">${brandMark(60)}</div>
         <div class="txt-2xl b">خدمة متابعة المعاملات والطلبات</div>
-        <div class="txt-sm mt2" style="color:var(--em-200)">تابع طلبك ومناشدتك لدى ${esc(state.settings.officeName||APP.office)} بكل شفافية — متاح على مدار الساعة</div>
+        <div class="txt-sm mt2" style="color:var(--em-200)">تابع حالة طلبك ومعاملتك لدى ${esc(state.settings.officeName||APP.office)} بكل شفافية — متاح على مدار الساعة</div>
       </div>
       <div class="pad5">
         <label>ادخل رمز المعاملة أو رقم الهاتف لمتابعة طلبك</label>
@@ -668,9 +675,9 @@ function renderCitizen(){
       </div>
     </div>
     <div class="grid g3 gap4">
-      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('plus')} تقديم طلب جديد</div><p class="txt-sm muted">قدّم مناشدتك أو معاملتك إلكترونياً واحصل على رمز متابعة فوري.</p><button class="btn btn-em btn-sm mt3" onclick="openNewRequest()">ابدأ التقديم</button></div>
+      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('plus')} تقديم طلب جديد</div><p class="txt-sm muted">قدّم طلبك أو معاملتك إلكترونياً واحصل على رمز متابعة فوري.</p><button class="btn btn-em btn-sm mt3" onclick="openNewRequest(true)">ابدأ التقديم</button></div>
       <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('barcode')} رمز الباركود</div><p class="txt-sm muted">كل معاملة لها باركود يُطبع على الوصل، امسحه للوصول السريع لحالتها.</p></div>
-      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('wa')} تواصل مباشر</div><p class="txt-sm muted">يصلك إشعار واتساب بكل تحديث على معاملتك من المكتب.</p></div>
+      <div class="card pad5"><div class="flex items-center gap2 b mb2 em">${icon('wa')} تواصل مباشر</div><p class="txt-sm muted">يصلك إشعار واتساب بكل تحديث على معاملتك من الجهة.</p></div>
     </div>
   </div>`;
 }
@@ -678,7 +685,7 @@ function doTrack(){
   const v = $('#trackInput').value.trim();
   const r = Store.byTracking(v);
   const box = $('#trackResult');
-  if(!r){ box.innerHTML=`<div class="chip urg-high" style="width:100%;justify-content:center;padding:10px">${icon('alert')} لم يتم العثور على معاملة بهذا الرمز. تأكد من الرمز أو راجع المكتب.</div>`; return; }
+  if(!r){ box.innerHTML=`<div class="chip urg-high" style="width:100%;justify-content:center;padding:10px">${icon('alert')} لم يتم العثور على معاملة بهذا الرمز. تأكد من الرمز أو راجع الجهة.</div>`; return; }
   const sla = slaInfo(r.submittedAt, r.status);
   box.innerHTML = `
   <div class="card pad5" style="border-color:var(--em-300);background:var(--em-50)">
@@ -688,70 +695,78 @@ function doTrack(){
     </div>
     <div class="barcode-box mb3">${Barcode(r.trackingId)}</div>
     <div class="grid g2 gap2 txt-sm">
-      <div class="kv"><span class="muted">رمز المعاملة</span><span class="mono b">${esc(r.trackingId)}</span></div>
+      <div class="kv"><span class="muted">رمز المتابعة</span><span class="mono b">${esc(r.trackingId)}</span></div>
       <div class="kv"><span class="muted">المحافظة</span><span class="sb">${esc(r.governorate)}</span></div>
-      <div class="kv"><span class="muted">الجهة المعنية</span><span class="sb">${esc(r.targetMinistry)}</span></div>
-      <div class="kv"><span class="muted">الأسبقية</span>${urgBadge(r.urgency)}</div>
+      <div class="kv"><span class="muted">نوع الطلب</span><span class="sb">${esc(r.requestType||'')}</span></div>
+      <div class="kv"><span class="muted">الجهة المعنية</span><span class="sb">${esc(r.targetEntity||'')}</span></div>
+      ${r.registryOut?`<div class="kv"><span class="muted">رقم الصادر</span><span class="mono sb">${esc(r.registryOut)}</span></div>`:''}
     </div>
     ${(r.documents||[]).length?`<div class="mt3 b txt-sm mb2">المستمسكات:</div>
     <div class="card pad3">${(r.documents||[]).map(d=>`<div class="kv"><span>${d.status==='missing'?'🔴':d.status==='verified'?'🟢':'🟡'} ${esc(d.name)}</span><span class="mono sb">${esc(d.value||'')}</span></div>`).join('')}</div>`:''}
     <div class="mt3 b txt-sm mb2">مسار المعاملة:</div>
     <div class="tl">${r.timeline.map(t=>`<div class="tl-item ${t.status}"><div class="sb txt-sm">${esc(t.title)}</div><div class="txt-xs muted">${esc(t.description)}</div>${t.timestamp?`<div class="txt-xs muted2 mono mt1">${esc(t.timestamp)}</div>`:''}</div>`).join('')}</div>
     ${(r.documents||[]).some(d=>d.status==='missing')?`<div class="chip urg-mid mt3" style="width:100%;justify-content:center;padding:8px">${icon('clip')} يوجد مستمسكات ناقصة — يرجى تزويد الجهة بها لإكمال معاملتك</div>
-    <button class="btn btn-wa btn-sm mt2" style="width:100%;justify-content:center" onclick="citizenSendDocs('${r.trackingId}')">${icon('wa')} مراسلة المكتب عبر واتساب لإرسال المستمسكات</button>`:''}
+    <button class="btn btn-wa btn-sm mt2" style="width:100%;justify-content:center" onclick="citizenSendDocs('${r.trackingId}')">${icon('wa')} مراسلة الجهة عبر واتساب لإرسال المستمسكات</button>`:''}
   </div>`;
 }
 function citizenSendDocs(t){
   const r = Store.byTracking(t); if(!r)return;
   const missing = (r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name);
-  const msg = `السلام عليكم، أنا المستفيد ${r.citizenName} بخصوص معاملتي المرقمة (${r.trackingId}). أرغب بتزويدكم بالمستمسكات المطلوبة: ${missing.join(' و ')}.`;
+  const msg = `السلام عليكم، أنا المواطن ${r.citizenName} بخصوص معاملتي المرقمة (${r.trackingId}). أرغب بتزويدكم بالمستمسكات المطلوبة: ${missing.join(' و ')}.`;
   window.open(waLink(APP.masterWhatsApp, msg),'_blank');
 }
 
-/* ------------------------------- واجهة المكتب ------------------------------- */
+/* ------------------------------- واجهة الإدارة ------------------------------- */
 function filtered(){
   const f=state.filters;
   return state.requests.filter(r=>{
-    if(f.q){ const s=f.q.toLowerCase(); if(!(r.trackingId.toLowerCase().includes(s)||r.citizenName.includes(f.q)||r.phone.includes(f.q)||(r.title||'').includes(f.q)||(r.nationalId||'').includes(f.q))) return false; }
+    if(f.q){ const s=f.q.toLowerCase(); if(!(r.trackingId.toLowerCase().includes(s)||(r.citizenName||'').includes(f.q)||(r.phone||'').includes(f.q)||(r.description||'').includes(f.q)||(r.targetEntity||'').includes(f.q))) return false; }
     if(f.status!=='الكل'&&r.status!==f.status)return false;
     if(f.gov!=='الكل'&&r.governorate!==f.gov)return false;
-    if(f.ministry!=='الكل'&&r.targetMinistry!==f.ministry)return false;
+    if(f.type!=='الكل'&&r.requestType!==f.type)return false;
     if(f.urgency!=='الكل'&&r.urgency!==f.urgency)return false;
-    if(f.docs==='ناقصة'&&!(r.documents||[]).some(d=>d.status==='missing'))return false;
-    if(f.docs==='مكتملة'&&(r.documents||[]).some(d=>d.status==='missing'))return false;
+    if(f.office!=='الكل'&&(r.office||'(بلا مكتب)')!==f.office)return false;
     return true;
   });
 }
 function renderStats(){
-  const s=Store.stats(); const F=state.filters.status;
+  const by={}; STATUSES.forEach(s=>by[s]=0); state.requests.forEach(r=>{ if(by[r.status]!=null)by[r.status]++; });
+  const urgent=state.requests.filter(r=>r.urgency==='عاجل'||r.urgency==='عالٍ').length;
+  const F=state.filters.status;
   const cell=(key,label,val,color)=>`<div class="stat ${F===key?'active':''}" onclick="setStatus('${key}')"><div class="n" style="color:${color}">${val}</div><div class="txt-xs sb muted">${label}</div></div>`;
   return `<div class="grid g4 gap3 mb4">
-    ${cell('الكل','كل المعاملات',s.total,'var(--sl-900)')}
-    ${cell('قيد التدقيق','قيد التدقيق',s.underReview,'#854d0e')}
-    ${cell('بانتظار مستمسكات','بانتظار مستمسكات',s.waitingDocs,'#9a3412')}
-    ${cell('أحيل بكتاب رسمي','أحيلت بكتاب',s.dispatched,'var(--em-700)')}
+    ${cell('الكل','كل الطلبات',state.requests.length,'var(--sl-900)')}
+    ${cell('جديد','جديدة',by['جديد'],'#1e40af')}
+    ${cell('كتاب ينتظر التوقيع','كتب تنتظر التوقيع',by['كتاب ينتظر التوقيع'],'#854d0e')}
+    ${cell('يحتاج استكمالاً','تحتاج استكمالاً',by['يحتاج استكمالاً'],'#9a3412')}
+  </div>
+  <div class="flex gap2 wrap mb3">
+    <span class="chip ${F==='مفرز — ضمن كتاب/ملف موحّد'?'st-follow':'urg-low'}" style="cursor:pointer;padding:5px 10px" onclick="setStatus('مفرز — ضمن كتاب/ملف موحّد')">مفرزة ضمن ملف موحّد: <b>${by['مفرز — ضمن كتاب/ملف موحّد']}</b></span>
+    <span class="chip urg-low" style="cursor:pointer;padding:5px 10px" onclick="setStatus('خارج الاختصاص — إرشاد')">خارج الاختصاص: <b>${by['خارج الاختصاص — إرشاد']}</b></span>
+    <span class="chip urg-high" style="cursor:pointer;padding:5px 10px" onclick="state.filters.status='الكل';state.filters.urgency='عاجل';renderBody()">عاجل/عالٍ: <b>${urgent}</b></span>
   </div>`;
 }
 function reqCard(r){
-  const sla=slaInfo(r.submittedAt,r.status); const comp=(r.aiAnalysis&&r.aiAnalysis.completenessRate)||0;
+  const over=r.reviewFlag;
   return `<div class="req-row">
     <div class="flex items-center justify-between wrap gap2">
-      <div class="flex items-center gap3">
-        <div><div class="b">${esc(r.citizenName)} ${sla.isOverdue?`<span class="chip urg-high txt-xs">متجاوزة المهلة</span>`:''}</div>
-        <div class="txt-xs muted">${esc(r.title)}</div></div>
-      </div>
-      <div class="flex items-center gap2">${urgBadge(r.urgency)}${statusBadge(r.status)}</div>
+      <div><div class="b">${esc(r.citizenName)} ${over?`<span class="chip urg-high txt-xs">مؤشر للمراجعة</span>`:''} ${r.duplicate?`<span class="chip urg-low txt-xs">تكرار محتمل</span>`:''}</div>
+        <div class="txt-xs muted">${esc((r.description||r.title||'').slice(0,90))}</div></div>
+      <div class="flex items-center gap2">${state.mode==='office'?urgBadge(r.urgency):''}${statusBadge(r.status)}</div>
     </div>
     <div class="flex items-center justify-between wrap gap2 mt3 txt-xs muted">
       <span class="mono b">${esc(r.trackingId)}</span>
-      <span>${esc(r.governorate)} · ${esc(r.targetMinistry)}</span>
-      <span>اكتمال المستمسكات: <b class="${comp>=80?'em':''}">${comp}%</b></span>
+      <span>${esc(r.requestType||'')}</span>
+      <span>${esc(r.governorate||'')}${r.district?' / '+esc(r.district):''}</span>
+      <span>الجهة: ${esc(r.targetEntity||'—')}</span>
+      ${r.office?`<span class="chip st-recv">${esc(r.office)}</span>`:''}
+      ${r.scope?`<span>${esc(r.scope)}</span>`:''}
     </div>
     <div class="flex gap2 mt3 wrap">
       <button class="btn btn-gray btn-sm" onclick="openDetail('${r.id}')">${icon('file')} التفاصيل والتحديث</button>
       <button class="btn btn-wa btn-sm" onclick="openWhatsApp('${r.id}')">${icon('wa')} واتساب</button>
       <button class="btn btn-white btn-sm" onclick="openLetter('${r.id}')">${icon('file')} كتاب رسمي</button>
-      <button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة باركود</button>
+      <button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} باركود</button>
     </div>
   </div>`;
 }
@@ -761,11 +776,13 @@ function renderDashboard(){
     ${renderStats()}
     <div class="card pad4 mb4">
       <div class="flex items-center gap2 mb3 wrap">
-        <div class="input-ic grow" style="min-width:180px">${icon('search')}<input placeholder="بحث بالاسم أو رمز المعاملة أو الهاتف..." value="${esc(state.filters.q)}" oninput="state.filters.q=this.value;renderBody()"></div>
-        <select style="width:auto" onchange="state.filters.gov=this.value;renderBody()">${['الكل',...GOVS].map(g=>`<option ${state.filters.gov===g?'selected':''}>${g}</option>`).join('')}</select>
-        <select style="width:auto" onchange="state.filters.urgency=this.value;renderBody()">${['الكل',...URGENCIES].map(g=>`<option ${state.filters.urgency===g?'selected':''}>${g}</option>`).join('')}</select>
-        <select style="width:auto" onchange="state.filters.docs=this.value;renderBody()">${['الكل','ناقصة','مكتملة'].map(g=>`<option ${state.filters.docs===g?'selected':''}>${g==='الكل'?'كل المستمسكات':'مستمسكات '+g}</option>`).join('')}</select>
+        <div class="input-ic grow" style="min-width:160px">${icon('search')}<input placeholder="بحث بالاسم أو الرمز أو الهاتف أو نص الطلب..." value="${esc(state.filters.q)}" oninput="state.filters.q=this.value;renderBody()"></div>
+        <select style="width:auto" onchange="state.filters.type=this.value;renderBody()">${['الكل',...REQUEST_TYPES].map(g=>`<option ${state.filters.type===g?'selected':''}>${g==='الكل'?'كل الأنواع':g}</option>`).join('')}</select>
+        <select style="width:auto" onchange="state.filters.gov=this.value;renderBody()">${['الكل',...GOVS].map(g=>`<option ${state.filters.gov===g?'selected':''}>${g==='الكل'?'كل المحافظات':g}</option>`).join('')}</select>
+        <select style="width:auto" onchange="state.filters.office=this.value;renderBody()">${['الكل',...officeList(),'(بلا مكتب)'].map(g=>`<option ${state.filters.office===g?'selected':''}>${g==='الكل'?'كل المكاتب':g}</option>`).join('')}</select>
+        <select style="width:auto" onchange="state.filters.urgency=this.value;renderBody()">${['الكل',...URGENCIES].map(g=>`<option ${state.filters.urgency===g?'selected':''}>${g==='الكل'?'كل الأولويات':g}</option>`).join('')}</select>
         <button class="btn btn-white btn-sm" onclick="resetFilters()">${icon('refresh')} تصفير</button>
+        <button class="btn btn-em btn-sm" onclick="exportLedger()">${icon('file')} تصدير إكسل</button>
       </div>
       <div class="flex items-center gap2 wrap" style="padding:10px;background:var(--em-50);border-radius:10px">
         <span class="chip" style="background:var(--em-800);color:#fff">${icon('sparkle')} فرز ذكي</span>
@@ -774,8 +791,8 @@ function renderDashboard(){
       </div>
       <div id="aiFilterNote"></div>
     </div>
-    <div class="flex items-center justify-between mb2"><span class="b txt-sm">النتائج (${list.length})</span><button class="btn btn-white btn-sm" onclick="sortList('urgency')">${icon('sort')} ترتيب حسب الأسبقية</button></div>
-    <div class="flex col gap3">${list.length?list.map(reqCard).join(''):'<div class="card pad6 center muted">لا توجد معاملات مطابقة</div>'}</div>
+    <div class="flex items-center justify-between mb2"><span class="b txt-sm">النتائج (${list.length})${list.length>200?' — تُعرض أول 200، استخدم الفلاتر أو التصدير':''}</span><button class="btn btn-white btn-sm" onclick="sortList('urgency')">${icon('sort')} ترتيب حسب الأولوية</button></div>
+    <div class="flex col gap3">${list.length?list.slice(0,200).map(reqCard).join(''):'<div class="card pad6 center muted">لا توجد طلبات مطابقة</div>'}</div>
   </div>`;
 }
 function renderSecretaryQuick(){
@@ -783,18 +800,20 @@ function renderSecretaryQuick(){
   return `<div class="wrapmax" style="padding:18px 16px">
     <div class="card pad5 mb4" style="background:var(--sl-900);color:#fff">
       <div class="flex items-center justify-between wrap gap3">
-        <div><div class="b txt-lg" style="color:var(--am-300)">${icon('shield')} لوحة التحديث السريع</div><div class="txt-sm" style="color:var(--sl-400)">مرحباً ${esc(state.session?state.session.name:'موظف المكتب')} — ${esc(state.settings.officeName||APP.office)}</div></div>
+        <div><div class="b txt-lg" style="color:var(--am-300)">${icon('shield')} لوحة التحديث السريع</div><div class="txt-sm" style="color:var(--sl-400)">مرحباً ${esc(state.session?state.session.name:'موظف الجهة')} — ${esc(state.settings.officeName||APP.office)}</div></div>
         <div class="flex gap2 wrap">
-          <button class="btn btn-em btn-sm" onclick="openNewRequest()">${icon('plus')} معاملة جديدة</button>
-          <button class="btn btn-dark btn-sm" onclick="openScanner()">${icon('cam')} مسح باركود</button>
-          <button class="btn btn-wa btn-sm" onclick="syncNow()">${icon('refresh')} مزامنة كوكل</button>
+          <button class="btn btn-em btn-sm" onclick="openNewRequest()">${icon('plus')} طلب جديد</button>
+          <button class="btn btn-dark btn-sm" onclick="openScanner()">${icon('cam')} باركود</button>
+          <button class="btn btn-white btn-sm" onclick="openPublicLink()">${icon('globe')} الرابط العام + QR</button>
+          <button class="btn btn-white btn-sm" onclick="openBackup()">${icon('cloud')} نسخ/استرجاع</button>
+          <button class="btn btn-white btn-sm" onclick="exportLedger()">${icon('file')} تصدير إكسل</button>
         </div>
       </div>
       <div class="grid g4 gap2 mt4">
-        <div class="center"><div class="n black mono txt-2xl">${s.total}</div><div class="txt-xs" style="color:var(--sl-400)">الكل</div></div>
-        <div class="center"><div class="n black mono txt-2xl" style="color:var(--am-300)">${s.waitingDocs}</div><div class="txt-xs" style="color:var(--sl-400)">بانتظار مستمسكات</div></div>
-        <div class="center"><div class="n black mono txt-2xl" style="color:#93c5fd">${s.underReview}</div><div class="txt-xs" style="color:var(--sl-400)">قيد التدقيق</div></div>
-        <div class="center"><div class="n black mono txt-2xl" style="color:var(--em-300)">${s.approved}</div><div class="txt-xs" style="color:var(--sl-400)">منجزة</div></div>
+        <div class="center"><div class="n black mono txt-2xl">${s.total}</div><div class="txt-xs" style="color:var(--sl-400)">كل الطلبات</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:#93c5fd">${s.neww}</div><div class="txt-xs" style="color:var(--sl-400)">جديدة</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:var(--am-300)">${s.letters}</div><div class="txt-xs" style="color:var(--sl-400)">كتب رسمية</div></div>
+        <div class="center"><div class="n black mono txt-2xl" style="color:var(--em-300)">${s.sorted}</div><div class="txt-xs" style="color:var(--sl-400)">مفرزة بملف موحّد</div></div>
       </div>
     </div>
     <div class="input-ic mb3">${icon('search')}<input placeholder="بحث سريع..." value="${esc(state.filters.q)}" oninput="state.filters.q=this.value;renderBody()"></div>
@@ -804,7 +823,7 @@ function renderSecretaryQuick(){
 function renderWhatsAppHub(){
   const list=state.requests.filter(r=>(r.documents||[]).some(d=>d.status==='missing')||r.status==='أحيل بكتاب رسمي');
   return `<div class="wrapmax" style="padding:18px 16px">
-    <div class="card pad5 mb4"><div class="b txt-lg flex items-center gap2">${icon('wa')} مركز مراسلات واتساب</div><div class="txt-sm muted mt1">المعاملات التي تحتاج تواصلاً فورياً مع المستفيد (مستمسكات ناقصة أو تحديث رسمي).</div></div>
+    <div class="card pad5 mb4"><div class="b txt-lg flex items-center gap2">${icon('wa')} مركز مراسلات واتساب</div><div class="txt-sm muted mt1">المعاملات التي تحتاج تواصلاً فورياً مع المواطن (مستمسكات ناقصة أو تحديث رسمي).</div></div>
     <div class="flex col gap3">${list.map(reqCard).join('')||'<div class="card pad6 center muted">لا توجد مراسلات معلّقة</div>'}</div>
   </div>`;
 }
@@ -812,17 +831,15 @@ function renderLetters(){
   const list=state.requests.filter(r=>r.officialLetterNumber||r.status==='أحيل بكتاب رسمي'||r.status==='قيد المتابعة بالوزارة');
   return `<div class="wrapmax" style="padding:18px 16px">
     <div class="card pad5 mb4"><div class="b txt-lg flex items-center gap2">${icon('file')} سجل الكتب الرسمية الرسمية</div><div class="txt-sm muted mt1">الكتب الصادرة بتوقيع الجهة المختصة إلى الوزارات والجهات المعنية.</div></div>
-    <div class="flex col gap3">${list.map(r=>`<div class="req-row"><div class="flex items-center justify-between wrap gap2"><div><div class="b">${esc(r.title)}</div><div class="txt-xs muted">${esc(r.citizenName)} · ${esc(r.targetMinistry)}</div></div><div class="center">${r.officialLetterNumber?`<span class="mono b txt-sm">${esc(r.officialLetterNumber)}</span><div class="txt-xs muted">${esc(r.officialLetterDate||'')}</div>`:statusBadge(r.status)}</div></div><div class="flex gap2 mt3"><button class="btn btn-gray btn-sm" onclick="openLetter('${r.id}')">${icon('file')} عرض وطباعة الكتاب</button></div></div>`).join('')||'<div class="card pad6 center muted">لا توجد كتب رسمية بعد</div>'}</div>
+    <div class="flex col gap3">${list.map(r=>`<div class="req-row"><div class="flex items-center justify-between wrap gap2"><div><div class="b">${esc(r.title)}</div><div class="txt-xs muted">${esc(r.citizenName)} · ${esc(r.targetEntity)}</div></div><div class="center">${r.officialLetterNumber?`<span class="mono b txt-sm">${esc(r.officialLetterNumber)}</span><div class="txt-xs muted">${esc(r.officialLetterDate||'')}</div>`:statusBadge(r.status)}</div></div><div class="flex gap2 mt3"><button class="btn btn-gray btn-sm" onclick="openLetter('${r.id}')">${icon('file')} عرض وطباعة الكتاب</button></div></div>`).join('')||'<div class="card pad6 center muted">لا توجد كتب رسمية بعد</div>'}</div>
   </div>`;
 }
 
 /* --------------------------------- التذييل --------------------------------- */
 function renderFooter(){
   return `<footer class="no-print"><div class="wrapmax flex items-center justify-between wrap gap3 txt-xs muted">
-    <div><b class="sb" style="color:var(--sl-800)">${esc(state.settings.officeName||APP.office)}</b> — منظومة إدارة المعاملات</div>
+    <div><b class="sb" style="color:var(--sl-800)">${esc(state.settings.officeName||APP.office)}</b> — منظومة إدارة المعاملات والطلبات</div>
     <div class="flex items-center gap3">
-      <span>${esc(APP.brandLine)} · ${APP.masterWhatsApp.replace('964','0')}</span>
-      <span>·</span>
       <span class="mono">الإصدار ${APP.version}</span>
       <span class="chip ${state.online?'st-done':'urg-low'}">${state.online?'متصل':'غير متصل'}</span>
     </div>
@@ -863,9 +880,9 @@ function setMode(m){
 }
 function setTab(t){ state.tab=t; render(); }
 function setStatus(s){ state.filters.status=s; renderBody(); }
-function resetFilters(){ state.filters={q:'',gov:'الكل',ministry:'الكل',urgency:'الكل',docs:'الكل',status:'الكل'}; renderBody(); }
+function resetFilters(){ state.filters={q:'',gov:'الكل',type:'الكل',office:'الكل',urgency:'الكل',status:'الكل'}; renderBody(); }
 function sortList(by){
-  if(by==='urgency'){ const o={'عاجل جداً':0,'متوسط':1,'عادي':2}; state.requests.sort((a,b)=>(o[a.urgency]??9)-(o[b.urgency]??9)); }
+  if(by==='urgency'){ const o={'عاجل':0,'عالٍ':1,'متوسط':2,'اعتيادي':3}; state.requests.sort((a,b)=>(o[a.urgency]??9)-(o[b.urgency]??9)); }
   else if(by==='date'){ state.requests.sort((a,b)=>(b.submittedAt||'').localeCompare(a.submittedAt||'')); }
   else if(by==='status'){ state.requests.sort((a,b)=>STATUSES.indexOf(a.status)-STATUSES.indexOf(b.status)); }
   renderBody(); toast('تم ترتيب القائمة');
@@ -883,11 +900,11 @@ function openLogin(){
   openModal(`
     <div class="modal-h" style="background:var(--sl-900);color:#fff;justify-content:space-between">
       <div class="flex items-center gap2"><span style="background:var(--em-900);color:var(--am-400);padding:7px;border-radius:9px">${icon('shield')}</span>
-      <div><div class="b">دخول موظف الجهة المستلِمة</div><div class="txt-xs" style="color:var(--sl-400)">الدخول عبر الترخيص المعتمد للجهة</div></div></div>
+      <div><div class="b">دخول موظف الجهة</div><div class="txt-xs" style="color:var(--sl-400)">الدخول عبر الترخيص المعتمد للجهة</div></div></div>
       <button class="x" style="color:#94a3b8" onclick="closeModal()">${icon('x')}</button>
     </div>
     <div class="modal-b">
-      <div class="field"><label>اسم الموظف / المستخدم</label><input id="lgName" value="موظف الجهة المستلِمة"></div>
+      <div class="field"><label>اسم الموظف / المستخدم</label><input id="lgName" value="موظف الجهة"></div>
       <div class="field"><label>كلمة المرور</label><input id="lgPass" type="password" value="" placeholder="••••••"></div>
       <div class="chip st-done" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px">${icon('check2')} البرنامج مُفعّل بالترخيص السحابي</div>
       <button class="btn btn-dark" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">${icon('shield')} دخول</button>
@@ -895,10 +912,10 @@ function openLogin(){
     </div>`,'440px');
 }
 function doLogin(){
-  const name=$('#lgName').value.trim()||'موظف المكتب'; const pass=$('#lgPass').value;
+  const name=$('#lgName').value.trim()||'موظف الجهة'; const pass=$('#lgPass').value;
   const stored = state.settings.staffPass || '123456';
   if(pass!==stored){ toast('كلمة المرور غير صحيحة', false); return; }
-  state.session={ name, role:'موظف المكتب', loginAt:nowStr() };
+  state.session={ name, role:'موظف الجهة', loginAt:nowStr() };
   localStorage.setItem('naib_session', JSON.stringify(state.session));
   closeModal(); state.mode='office'; state.tab='secretary-quick'; render(); toast('مرحباً '+name);
 }
@@ -906,46 +923,115 @@ function doLogin(){
 /* تفاصيل المعاملة + التحديث */
 function openDetail(id){
   const r=state.requests.find(x=>x.id===id); if(!r)return;
-  const ai=r.aiAnalysis||{};
   openModal(`
     <div class="modal-h" style="background:var(--em-950);color:#fff;justify-content:space-between">
-      <div><div class="b">${esc(r.citizenName)}</div><div class="txt-xs" style="color:var(--em-200)">${esc(r.trackingId)} · ${esc(r.governorate)}</div></div>
+      <div><div class="b">${esc(r.citizenName)}</div><div class="txt-xs" style="color:var(--em-200)">${esc(r.trackingId)} · ${esc(r.governorate)}${r.district?' / '+esc(r.district):''}</div></div>
       <button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
     </div>
     <div class="modal-b">
-      <div class="barcode-box mb3">${Barcode(r.trackingId)}<div class="flex gap2 justify-center mt2"><button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة الوصل والباركود</button></div></div>
-      <div class="field"><label>عنوان الطلب</label><div class="card pad3 txt-sm">${esc(r.title)}</div></div>
-      <div class="field"><label>تفاصيل المناشدة</label><div class="card pad3 txt-sm" style="line-height:1.8">${esc(r.description)}</div></div>
+      <div class="barcode-box mb3">${Barcode(r.trackingId)}<div class="flex gap2 justify-center mt2 wrap"><button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة الوصل</button>${r.driveLink?`<a class="btn btn-white btn-sm" href="${esc(r.driveLink)}" target="_blank">${icon('ext')} مستمسكات Drive</a>`:''}</div></div>
+      <div class="field"><label>الطلب (كما قاله المواطن)</label><div class="card pad3 txt-sm" style="line-height:1.9;max-height:160px;overflow:auto">${esc(r.description||r.title)}</div></div>
       <div class="grid g2 gap3">
+        <div class="field"><label>نوع الطلب</label><input id="dType" list="dTypeL" value="${esc(r.requestType||'')}"><datalist id="dTypeL">${REQUEST_TYPES.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
+        <div class="field"><label>الجهة المعنية</label><input id="dEntity" list="dEntL" value="${esc(r.targetEntity||'')}" onblur="this.value=normalizeEntity(this.value)"><datalist id="dEntL">${ENTITIES.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
         <div class="field"><label>الحالة</label><select id="dStatus">${STATUSES.map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
-        <div class="field"><label>الأسبقية</label><select id="dUrg">${URGENCIES.map(s=>`<option ${r.urgency===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>الأولوية (داخلي)</label><select id="dUrg">${URGENCIES.map(s=>`<option ${r.urgency===s?'selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="field"><label>المكتب / الفرع</label><input id="dOffice" list="offList2" value="${esc(r.office||'')}"><datalist id="offList2">${officeList().map(o=>`<option value="${esc(o)}">`).join('')}</datalist></div>
+        <div class="field"><label>موظف الاستقبال</label><input id="dEmp" value="${esc(r.receptionEmployee||'')}"></div>
+        <div class="field"><label>رقم الوارد</label><input id="dRegIn" class="mono" value="${esc(r.registryIn||'')}" placeholder="وارد/.."></div>
+        <div class="field"><label>رقم الصادر</label><input id="dRegOut" class="mono" value="${esc(r.registryOut||'')}" placeholder="صادر/.."></div>
       </div>
-      <div class="grid g2 gap3">
-        <div class="field"><label>رقم الكتاب الرسمي</label><input id="dLetterNo" value="${esc(r.officialLetterNumber||'')}" placeholder="رقم/2026/..."></div>
-        <div class="field"><label>تاريخ الكتاب</label><input id="dLetterDate" value="${esc(r.officialLetterDate||'')}" placeholder="2026-11-01"></div>
-      </div>
-      <div class="field"><label>ملاحظات المكتب</label><textarea id="dNotes" rows="2">${esc(r.staffNotes||'')}</textarea></div>
-      <div class="field"><label>المستمسكات (اسم المستمسك ورقمه/قيمته)</label><div class="card pad3">${docsEditor('editDocRows', r.documents, true)}</div></div>
-      <div class="card pad4 mb3" style="background:var(--em-50);border-color:var(--em-200)">
-        <div class="flex items-center justify-between mb2"><span class="b txt-sm em">${icon('sparkle')} التحليل الذكي</span><button class="btn btn-em btn-sm" onclick="reAudit('${r.id}')">إعادة التدقيق</button></div>
-        <div class="txt-sm" style="line-height:1.8">${esc(ai.summary||'—')}</div>
-        ${(ai.missingDocsSummary&&ai.missingDocsSummary.length)?`<div class="txt-xs mt2"><b>النواقص:</b> ${ai.missingDocsSummary.map(esc).join('، ')}</div>`:''}
-        ${ai.suggestedAction?`<div class="txt-xs mt1"><b>الإجراء المقترح:</b> ${esc(ai.suggestedAction)}</div>`:''}
-      </div>
+      ${r.suggestedAction?`<div class="chip st-recv" style="width:100%;justify-content:flex-start;padding:8px;margin-bottom:10px">${icon('sparkle')} الإجراء المقترح: ${esc(r.suggestedAction)}</div>`:''}
+      ${r.unifiedFile?`<div class="txt-xs muted mb2">ملف موحّد: <b class="mono">${esc(r.unifiedFile)}</b></div>`:''}
+      <div class="field"><label>ملاحظات الإدارة</label><textarea id="dNotes" rows="2">${esc(r.staffNotes||'')}</textarea></div>
+      <div class="field"><label>المستمسكات (اسم المستند ورقمه)</label><div class="card pad3">${docsEditor('editDocRows', r.documents, true)}</div></div>
       <div class="flex gap2 wrap">
         <button class="btn btn-em grow" style="justify-content:center" onclick="saveDetail('${r.id}')">${icon('check')} حفظ التحديثات</button>
         <button class="btn btn-wa" onclick="openWhatsApp('${r.id}')">${icon('wa')}</button>
         <button class="btn btn-white" onclick="openLetter('${r.id}')">${icon('file')}</button>
       </div>
-    </div>`,'620px');
+    </div>`,'640px');
 }
-function updateDoc(id,i,v){ const r=state.requests.find(x=>x.id===id); if(r&&r.documents[i]){ r.documents[i].status=v; } }
 function saveDetail(id){
   const r=state.requests.find(x=>x.id===id); if(!r)return;
-  r.status=$('#dStatus').value; r.urgency=$('#dUrg').value; r.officialLetterNumber=$('#dLetterNo').value.trim(); r.officialLetterDate=$('#dLetterDate').value.trim(); r.staffNotes=$('#dNotes').value; r.documents=readDocRows('editDocRows'); r.updatedAt=nowStr();
+  const oldStatus=r.status;
+  r.requestType=$('#dType').value.trim(); r.targetEntity=normalizeEntity($('#dEntity').value.trim());
+  r.status=$('#dStatus').value; r.urgency=$('#dUrg').value; r.office=$('#dOffice').value.trim(); r.receptionEmployee=$('#dEmp').value.trim();
+  r.registryIn=$('#dRegIn').value.trim(); r.registryOut=$('#dRegOut').value.trim(); r.staffNotes=$('#dNotes').value; r.documents=readDocRows('editDocRows'); r.updatedAt=nowStr();
+  if(oldStatus!==r.status){ r.timeline=r.timeline||[]; r.timeline.forEach(t=>{if(t.status==='current')t.status='completed';}); r.timeline.push({id:'t'+Date.now(),timestamp:nowStr(),title:'تحديث الحالة: '+r.status,description:r.registryOut?('صادر '+r.registryOut):'',actor:state.session?state.session.name:'الإدارة',status:'current'}); }
   Store.upsert(r); closeModal(); render(); toast('تم حفظ التحديثات' + (state.settings.gasUrl?' ومزامنتها':''));
+  if(oldStatus!==r.status) notifyEmployee(r);
 }
-function reAudit(id){ const r=state.requests.find(x=>x.id===id); if(!r)return; r.aiAnalysis=heuristicAudit(r.category,r.title,r.description,r.documents); Store.upsert(r); openDetail(id); toast('تم إعادة التدقيق'); }
+/* ---------------- تصدير إكسل/CSV ذكي (مفلتر) ---------------- */
+function exportLedger(){
+  const list=filtered();
+  const cols=['رمز المتابعة','تاريخ الاستلام','الاسم الرباعي','الهاتف','المحافظة','القضاء/الحي','نوع الطلب','الجهة المعنية','الطلب','فرد/مجموعة','المستند','الحالة','الأولوية','المكتب/الفرع','موظف الاستقبال','القناة','رقم الوارد','رقم الصادر','آخر تحديث'];
+  const rows=list.map(r=>[r.trackingId,r.submittedAt,r.citizenName,r.phone,r.governorate,r.district,r.requestType,r.targetEntity,(r.description||'').replace(/\n/g,' '),r.scope,r.documentState,r.status,r.urgency,r.office,r.receptionEmployee,r.channel,r.registryIn,r.registryOut,r.updatedAt]);
+  const esc=v=>{ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const csv='﻿'+[cols.join(',')].concat(rows.map(r=>r.map(esc).join(','))).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='سجل_الطلبات_'+nowStr().replace(/[: ]/g,'-')+'.csv'; a.click(); URL.revokeObjectURL(url);
+  toast('تم تصدير '+list.length+' طلب إلى إكسل (CSV)');
+}
+/* ---------------- الرابط العام للمواطن + QR ---------------- */
+function publicUrl(){ return location.origin+location.pathname+'#submit'; }
+function qrImg(data,size){ return `https://api.qrserver.com/v1/create-qr-code/?size=${size||220}x${size||220}&margin=8&data=${encodeURIComponent(data)}`; }
+function openPublicLink(){
+  const u=publicUrl();
+  openModal(`<div class="modal-h" style="background:var(--em-900);color:#fff;justify-content:space-between"><div class="b">${icon('globe')} الرابط العام لتقديم الطلبات</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b center">
+      <p class="txt-sm muted mb3">شارك هذا الرابط أو رمز QR مع المواطنين ليقدّموا طلباتهم مباشرة (بوابة عامة بلا دخول).</p>
+      <div class="card pad4 mb3" style="display:inline-block"><img src="${qrImg(u,220)}" alt="QR" width="200" height="200" style="display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div style="display:none" class="txt-xs muted">يتطلب اتصالاً لعرض الـ QR</div></div>
+      <div class="flex gap2"><input class="mono txt-xs" value="${esc(u)}" readonly><button class="btn btn-gray shrink0" onclick="navigator.clipboard.writeText('${esc(u)}');toast('نُسخ الرابط')">${icon('copy')}</button></div>
+      <div class="flex gap2 justify-center wrap mt3">
+        <a class="btn btn-wa" href="${waLink('', 'قدّم طلبك لمكتبنا عبر الرابط: '+u)}" target="_blank">${icon('wa')} مشاركة عبر واتساب</a>
+        <a class="btn btn-white" href="${esc(u)}" target="_blank">${icon('ext')} فتح الصفحة العامة</a>
+      </div>
+    </div>`,'440px');
+}
+function renderPublicPage(){
+  $('#app').innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column">
+    <div class="hero pad6" style="text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(54)}</div>
+      <div class="txt-xl b">${esc(state.settings.officeName||APP.office)}</div>
+      <div class="txt-sm mt1" style="color:var(--em-200)">بوابة تقديم الطلبات ومتابعتها</div></div>
+    <div class="wrapmax" style="padding:20px 16px;flex:1">
+      <div class="card pad5 mb4"><div class="b mb2">${icon('search')} متابعة طلب سابق</div>
+        <div class="flex gap2 wrap"><input id="trackInput" class="grow" placeholder="رمز المتابعة أو رقم الهاتف" style="min-width:180px"><button class="btn btn-em" onclick="doTrack()">${icon('search')} استعلام</button></div>
+        <div id="trackResult" class="mt3"></div></div>
+      <div class="card pad5 center"><div class="b mb2">${icon('plus')} تقديم طلب جديد</div><p class="txt-sm muted mb3">قدّم طلبك إلكترونياً واحصل على رمز متابعة فوري.</p>
+        <button class="btn btn-em" onclick="openNewRequest(true)">${icon('plus')} ابدأ التقديم</button></div>
+    </div>
+    <footer class="center txt-xs muted2" style="padding:14px">منظومة إدارة المعاملات والطلبات</footer>
+    <div id="modalRoot"></div></div>`;
+}
+/* ---------------- النسخ الاحتياطي والاسترجاع ---------------- */
+function openBackup(){
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b">${icon('cloud')} النسخ الاحتياطي والاسترجاع</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="card pad4 mb3"><div class="b txt-sm mb2 em">${icon('file')} نسخة احتياطية</div><p class="txt-xs muted mb2">تنزيل كل الطلبات (${state.requests.length}) كملف استرجاع JSON.</p><button class="btn btn-em btn-sm" onclick="downloadBackup()">${icon('file')} تنزيل نسخة احتياطية</button></div>
+      <div class="card pad4"><div class="b txt-sm mb2 em">${icon('refresh')} استرجاع / استيراد بيانات</div><p class="txt-xs muted mb2">اختر ملف استرجاع (JSON). يمكنك الاستبدال الكامل أو الدمج مع الموجود.</p>
+        <input type="file" id="restoreFile" accept=".json,application/json" class="mb2">
+        <div class="flex gap2 wrap"><button class="btn btn-em btn-sm" onclick="doRestore('replace')">${icon('refresh')} استبدال كامل</button><button class="btn btn-white btn-sm" onclick="doRestore('merge')">${icon('plus')} دمج مع الحالي</button></div>
+        <div id="restoreMsg" class="txt-xs mt2"></div></div>
+    </div>`,'520px');
+}
+function downloadBackup(){ const blob=new Blob([Store.exportBackup()],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='نسخة_احتياطية_'+nowStr().replace(/[: ]/g,'-')+'.json'; a.click(); URL.revokeObjectURL(url); toast('تم تنزيل النسخة الاحتياطية'); }
+function doRestore(mode){
+  const f=$('#restoreFile').files[0]; const msg=$('#restoreMsg');
+  if(!f){ msg.innerHTML='<span class="chip urg-mid" style="padding:4px 8px">اختر ملف أولاً</span>'; return; }
+  const rd=new FileReader(); rd.onload=()=>{ try{ const obj=JSON.parse(rd.result); const n=Store.importRestore(obj,mode); if(!n){ msg.innerHTML='<span class="chip urg-high" style="padding:4px 8px">الملف لا يحتوي طلبات صالحة</span>'; return; } closeModal(); render(); toast((mode==='merge'?'تم دمج ':'تم استرجاع ')+n+' طلب'); if(state.settings.gasUrl) GAS.push(); }catch(e){ msg.innerHTML='<span class="chip urg-high" style="padding:4px 8px">ملف غير صالح: '+esc(e.message)+'</span>'; } };
+  rd.readAsText(f);
+}
+// إشعار واتساب للموظف المسؤول عند تغيير الحالة
+function notifyEmployee(r){
+  const dir=state.settings.empDirectory||{}; const emp=r.receptionEmployee||''; const phone=dir[emp];
+  const msg=`تحديث حالة طلب\nالرمز: ${r.trackingId}\nالمواطن: ${r.citizenName}\nالحالة الجديدة: ${r.status}\nالموظف المسؤول: ${emp||'—'}${r.registryOut?'\nالصادر: '+r.registryOut:''}`;
+  const to = phone || state.settings.supervisorPhone || APP.masterWhatsApp;
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('wa')} إشعار الموظف المسؤول</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b"><p class="txt-sm muted mb3">تغيّرت حالة الطلب. أرسل إشعاراً للموظف المسؤول${phone?' ('+esc(emp)+')':''} عبر واتساب:</p>
+    <div class="card pad3 txt-sm mb3" style="white-space:pre-wrap">${esc(msg)}</div>
+    <a class="btn btn-wa" style="width:100%;justify-content:center" href="${waLink(to,msg)}" target="_blank" onclick="closeModal()">${icon('send')} إرسال الإشعار عبر واتساب</a></div>`,'460px');
+}
 
 /* ---------- حقول المستمسكات اليدوية (اسم المستمسك + رقمه/قيمته) ---------- */
 function docRowHtml(name,value,status){
@@ -979,61 +1065,99 @@ function docsEditor(containerId, docs, commonBtn){
 }
 
 /* معاملة جديدة */
-function openNewRequest(){
+// توحيد ذكي لأسماء الجهات (معالجة اختلاف الكتابة والأخطاء الإملائية)
+const ENTITY_NORMALIZE=[
+  [/الترب?ي?ه|ترب?يه|وزار[ةه] الترب?ي?[ةه]/,'وزارة التربية'],
+  [/العمل|الرعاي[ةه]|الحماي[ةه] الاجتماعي[ةه]/,'وزارة العمل والشؤون الاجتماعية'],
+  [/التعليم العالي|الجامع[ةه]|الدراس[ةه] المسائي/,'وزارة التعليم العالي والبحث العلمي'],
+  [/الصح[ةه]|صحه/,'وزارة الصحة'],
+  [/المالي[ةه]|التقاعد/,'وزارة المالية'],
+  [/الما[ءه]|الموارد المائي[ةه]/,'وزارة الموارد المائية'],
+  [/الكهرب/,'وزارة الكهرباء'],
+  [/النفط/,'وزارة النفط'],
+  [/الداخلي[ةه]/,'وزارة الداخلية'],
+  [/الدفاع/,'وزارة الدفاع'],
+  [/الشهداء/,'مؤسسة الشهداء'],
+  [/الاسكان|الاعمار|البلدي/,'وزارة الإعمار والإسكان والبلديات'],
+  [/المحافظ[ةه]/,'محافظة البصرة']
+];
+function normalizeEntity(txt){ const s=String(txt||'').trim(); if(!s)return s; for(const[re,canon]of ENTITY_NORMALIZE){ if(re.test(s))return canon; } return s; }
+
+function openNewRequest(pub){
+  const subProps=`id="nSubWrap" style="display:none"`;
   openModal(`
     <div class="modal-h" style="background:var(--em-800);color:#fff;justify-content:space-between">
-      <div class="b">${icon('plus')} تسجيل معاملة / مناشدة جديدة</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
+      <div class="b">${icon('plus')} ${pub?'تقديم طلب — بوابة المواطن':'تسجيل طلب جديد'}</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
     </div>
     <div class="modal-b">
       <div class="grid g2 gap3">
-        <div class="field"><label>اسم المستفيد الثلاثي *</label><input id="nName" placeholder="الاسم الكامل"></div>
+        <div class="field"><label>الاسم الرباعي واللقب *</label><input id="nName" placeholder="الاسم / الأب / الجد / اللقب" oninput="nameHint(this)"><div id="nNameHint" class="txt-xs muted2 mt1"></div></div>
         <div class="field"><label>رقم الهاتف *</label><input id="nPhone" class="mono" placeholder="07xxxxxxxxx"></div>
-        <div class="field"><label>الرقم الوطني</label><input id="nNid" class="mono" placeholder="اختياري"></div>
-        <div class="field"><label>المحافظة</label><select id="nGov">${GOVS.map(g=>`<option>${g}</option>`).join('')}</select></div>
-        <div class="field"><label>القضاء / المحلة</label><input id="nDist" placeholder="مثال: الكرخ - حي..."></div>
-        <div class="field"><label>القطاع</label><select id="nCat">${CATEGORIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
-        <div class="field"><label>الوزارة المعنية</label><select id="nMin">${MINISTRIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
-        <div class="field"><label>الأسبقية</label><select id="nUrg">${URGENCIES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>المحافظة</label><input id="nGov" list="govList" value="البصرة"><datalist id="govList">${GOVS.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
+        <div class="field"><label>القضاء / الناحية / الحي</label><input id="nDist" placeholder="مثال: أبي الخصيب - مهيجران"></div>
+        <div class="field"><label>نوع الطلب</label><select id="nType" onchange="subReqUi()">${REQUEST_TYPES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>الجهة المعنية (اكتبها كما تعرفها)</label><input id="nEntity" list="entList" placeholder="مثال: وزارة التربية" onblur="this.value=normalizeEntity(this.value)"><datalist id="entList">${ENTITIES.map(g=>`<option value="${esc(g)}">`).join('')}</datalist><div class="txt-xs muted2 mt1">يُصحَّح الاسم تلقائياً لتوحيد الكتابة</div></div>
       </div>
-      <div class="field"><label>عنوان الطلب *</label><input id="nTitle" placeholder="عنوان مختصر للمناشدة"></div>
-      <div class="field"><label>تفاصيل المناشدة</label><textarea id="nDesc" rows="3" placeholder="اشرح طلب المستفيد بالتفصيل..."></textarea></div>
-      <div class="field"><label>المستمسكات (اكتب اسم المستمسك ورقمه/قيمته)</label>${docsEditor('newDocRows', null, true)}</div>
-      <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px" onclick="createRequest()">${icon('check')} تسجيل المعاملة وتوليد رمز التتبع</button>
-    </div>`,'640px');
+      <div class="field" id="subReqWrap" style="display:none"><label>التصنيف الفرعي / المطلوب</label><select id="nSubReq"></select></div>
+      <div class="grid g2 gap3">
+        <div class="field"><label>الطلب لِـ</label><select id="nScope">${SCOPES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+        <div class="field"><label>هل لدى المواطن مستند؟</label><select id="nDocState"><option>نعم — صُوِّر</option><option>نعم — سيرسله لاحقاً</option><option>لا</option><option>غير مُدخل</option></select></div>
+      </div>
+      <div class="field"><label>الطلب (كما قاله المواطن) *</label><textarea id="nDesc" rows="3" placeholder="اكتب نص الطلب بالتفصيل..."></textarea></div>
+      <div class="field"><label>رابط المستمسكات على Google Drive (صور/PDF جودة عالية)</label><input id="nDrive" class="mono txt-xs" placeholder="https://drive.google.com/..."></div>
+      ${pub?'':`<div class="card pad3 mb3" style="background:var(--sl-50)"><div class="b txt-sm mb2 em">${icon('shield')} حقول داخلية (للموظف فقط)</div>
+      <div class="grid g2 gap3">
+        <div class="field" style="margin:0"><label>الأولوية (داخلي)</label><select id="nUrg">${URGENCIES.map(g=>`<option ${g==='اعتيادي'?'selected':''}>${g}</option>`).join('')}</select></div>
+        <div class="field" style="margin:0"><label>موظف الاستقبال</label><input id="nEmp" placeholder="اسم الموظف"></div>
+        <div class="field" style="margin:0"><label>المكتب / الفرع</label><input id="nOffice" list="offList" placeholder="OFF-.. مكتب..."><datalist id="offList">${officeList().map(o=>`<option value="${esc(o)}">`).join('')}</datalist></div>
+        <div class="field" style="margin:0"><label>رقم الوارد</label><input id="nRegIn" class="mono" placeholder="وارد/.."></div>
+      </div></div>`}
+      <div class="field"><label>المستمسكات (اسم المستند ورقمه)</label>${docsEditor('newDocRows', null, true)}</div>
+      <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px" onclick="createRequest(${pub?'true':'false'})">${icon('check')} ${pub?'إرسال الطلب':'تسجيل الطلب وتوليد الرمز'}</button>
+    </div>`,'680px');
+  subReqUi();
 }
-function createRequest(){
-  const name=$('#nName').value.trim(), phone=$('#nPhone').value.trim(), title=$('#nTitle').value.trim();
-  if(!name||!phone||!title){ toast('يرجى إكمال الاسم والهاتف وعنوان الطلب', false); return; }
-  const cat=$('#nCat').value, desc=$('#nDesc').value.trim();
+function nameHint(el){ const parts=el.value.trim().split(/\s+/).filter(Boolean); const h=$('#nNameHint'); if(!h)return; h.textContent = parts.length>=4?'✓ اسم رباعي':(el.value.trim()?('يُفضّل الاسم الرباعي واللقب ('+parts.length+' مقاطع)'):''); h.style.color=parts.length>=4?'var(--em-700)':'var(--sl-400)'; }
+function subReqUi(){ const t=$('#nType'); if(!t)return; const subs=SUBREQUIREMENTS[t.value]; const w=$('#subReqWrap'), s=$('#nSubReq'); if(subs&&subs.length){ s.innerHTML=subs.map(x=>`<option>${esc(x)}</option>`).join(''); w.style.display=''; } else { w.style.display='none'; } }
+function createRequest(pub){
+  const name=$('#nName').value.trim(), phone=$('#nPhone').value.trim(), desc=$('#nDesc').value.trim();
+  if(!name||!phone||!desc){ toast('يرجى إكمال الاسم الرباعي والهاتف ونص الطلب', false); return; }
+  if(name.split(/\s+/).filter(Boolean).length<3){ toast('يرجى إدخال الاسم الرباعي واللقب', false); return; }
   const docs=readDocRows('newDocRows');
-  const t=Store.newTracking(); const code='IQ'+t.split('-')[2];
-  const audit=heuristicAudit(cat,title,desc,docs);
-  // أضف النواقص كمستمسكات ناقصة
-  audit.missingDocsSummary.forEach((m,i)=>docs.push({id:'m'+i,name:m,status:'missing',required:true}));
-  const req={ id:'req-'+Date.now(), trackingId:t, citizenName:name, nationalId:$('#nNid').value.trim(), phone, governorate:$('#nGov').value, district:$('#nDist').value.trim(), category:cat, targetMinistry:$('#nMin').value, title, description:desc, urgency:$('#nUrg').value, status:'مستلم', submittedAt:nowStr(), updatedAt:nowStr(), documents:docs,
-    timeline:[{id:'t1',timestamp:nowStr(),title:'استلام المعاملة وتسجيلها',description:'تم تسجيل الطلب وتوليد رمز التتبع والباركود.',actor:state.settings.officeName||APP.office,status:'current'}],
-    aiAnalysis:audit, staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
-  Store.upsert(req); closeModal(); render();
-  // إشعار واتساب للمستفيد ببيانات الحساب والباركود
-  const msg=`عزيزي المستفيد ${name}\nتم استلام وتسجيل طلبكم بنجاح لدى ${state.settings.officeName||APP.office}.\nرمز المعاملة (الباركود): ${t}\nكلمة مرور المتابعة: ${code}\nيمكنكم متابعة حالة معاملتكم في أي وقت عبر المنظومة.`;
-  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل المعاملة</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
+  const drive=$('#nDrive').value.trim(); if(drive) docs.unshift({id:'drv',name:'مستمسكات (Google Drive)',value:drive,status:'submitted',required:true});
+  const t=Store.newTracking(); const code='CIT'+t.split('-')[2].slice(-4);
+  const sub=$('#nSubReq'); const subVal=($('#subReqWrap').style.display!=='none'&&sub)?sub.value:'';
+  const req={ id:'req-'+t, trackingId:t, citizenName:name, phone, governorate:$('#nGov').value.trim(), district:$('#nDist').value.trim(),
+    requestType:$('#nType').value, subRequest:subVal, targetEntity:normalizeEntity($('#nEntity').value.trim()),
+    title:(desc.slice(0,45)||$('#nType').value), description:desc, scope:$('#nScope').value, documentState:$('#nDocState').value,
+    driveLink:drive, documents:docs, channel: pub?'الرابط العام':'استقبال مباشر',
+    receptionEmployee: pub?'':($('#nEmp')?$('#nEmp').value.trim():''), office: pub?'':($('#nOffice')?$('#nOffice').value.trim():''),
+    status:'جديد', urgency: pub?'':($('#nUrg')?$('#nUrg').value:'اعتيادي'), registryIn: pub?'':($('#nRegIn')?$('#nRegIn').value.trim():''), registryOut:'',
+    submittedAt:nowStr(), updatedAt:nowStr(),
+    timeline:[{id:'t1',timestamp:nowStr(),title:'استلام الطلب وتسجيله',description:'عبر '+(pub?'الرابط العام':'الاستقبال')+(subVal?' — '+subVal:''),actor:state.settings.officeName||APP.office,status:'current'}],
+    staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
+  Store.upsert(req); closeModal(); if(!pub) render();
+  const msg=`عزيزي المواطن ${name}\nتم استلام وتسجيل طلبكم لدى ${state.settings.officeName||APP.office}.\nرمز المتابعة: ${t}\nكلمة المرور: ${code}\nيمكنكم متابعة حالة طلبكم عبر المنظومة.`;
+  openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل الطلب</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b center">
       <div class="barcode-box mb3">${Barcode(t)}</div>
-      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="kv"><span class="muted">رمز المعاملة</span><b class="mono">${t}</b></div><div class="kv"><span class="muted">كلمة مرور المستفيد</span><b class="mono em">${code}</b></div></div>
+      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="kv"><span class="muted">رمز المتابعة</span><b class="mono">${t}</b></div><div class="kv"><span class="muted">كلمة المرور</span><b class="mono em">${code}</b></div></div>
       <div class="flex gap2 justify-center wrap">
-        <a class="btn btn-wa" href="${waLink(phone,msg)}" target="_blank" onclick="closeModal()">${icon('wa')} إرسال البيانات للمستفيد</a>
-        <button class="btn btn-white" onclick="printBarcode('${req.id}')">${icon('print')} طباعة الوصل</button>
+        <a class="btn btn-wa" href="${waLink(phone,msg)}" target="_blank">${icon('wa')} إرسال البيانات للمواطن</a>
+        ${pub?'':`<button class="btn btn-white" onclick="printBarcode('${req.id}')">${icon('print')} طباعة الوصل</button>`}
+        <button class="btn btn-gray" onclick="closeModal()">تم</button>
       </div>
     </div>`,'460px');
 }
+function officeList(){ const s=new Set(); state.requests.forEach(r=>{ if(r.office) s.add(r.office); }); return [...s]; }
 
 /* واتساب */
 function waTemplates(r,kind){
   const office=state.settings.officeName||APP.office;
   const missing=(r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name);
-  if(kind==='approved') return `بشرى سارة للمستفيد ${r.citizenName}\nيسر ${office} إعلامكم بصدور الموافقة الرسمية على طلبكم المرقم (${r.trackingId}) بعنوان: "${r.title}".\nنبارك لكم ونسأل الله التوفيق.`;
-  if(kind==='status') return `عزيزي المستفيد ${r.citizenName}\nنحيطكم علماً بأن طلبكم المرقم (${r.trackingId}) الخاص بـ "${r.title}" حالته الحالية: [${r.status}].\nيمكنكم متابعة المعاملة برمز التتبع (${r.trackingId}).\nمع تحيات ${office}.`;
-  return `عزيزي المستفيد ${r.citizenName}\nبخصوص طلبكم المرقم (${r.trackingId})، نحتاج لاستكمال المستمسكات التالية:\n${missing.map((m,i)=>(i+1)+'. '+m).join('\n')||'- (لا نواقص مسجلة)'}\nيرجى تزويد ${office} بها لإكمال معاملتكم. شكراً لتعاونكم.`;
+  if(kind==='approved') return `بشرى سارة للمواطن ${r.citizenName}\nيسر ${office} إعلامكم بصدور الموافقة الرسمية على طلبكم المرقم (${r.trackingId}) بعنوان: "${r.title}".\nنبارك لكم ونسأل الله التوفيق.`;
+  if(kind==='status') return `عزيزي المواطن ${r.citizenName}\nنحيطكم علماً بأن طلبكم المرقم (${r.trackingId}) الخاص بـ "${r.title}" حالته الحالية: [${r.status}].\nيمكنكم متابعة المعاملة برمز التتبع (${r.trackingId}).\nمع تحيات ${office}.`;
+  return `عزيزي المواطن ${r.citizenName}\nبخصوص طلبكم المرقم (${r.trackingId})، نحتاج لاستكمال المستمسكات التالية:\n${missing.map((m,i)=>(i+1)+'. '+m).join('\n')||'- (لا نواقص مسجلة)'}\nيرجى تزويد ${office} بها لإكمال معاملتكم. شكراً لتعاونكم.`;
 }
 function openWhatsApp(id){
   const r=state.requests.find(x=>x.id===id); if(!r)return;
@@ -1055,7 +1179,7 @@ async function aiDraftWhatsApp(id){
   const r=state.requests.find(x=>x.id===id); if(!r||!AI.ready())return;
   toast('جارِ الصياغة بالذكاء الاصطناعي...');
   try{
-    const out=await AI.ask([{role:'user',content:`اكتب رسالة واتساب رسمية ومهذبة للمستفيد ${r.citizenName} بخصوص معاملته ${r.trackingId} "${r.title}"، حالتها ${r.status}، والمستمسكات الناقصة: ${(r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name).join('، ')||'لا يوجد'}. أعد الرسالة فقط بلا مقدمات.`}]);
+    const out=await AI.ask([{role:'user',content:`اكتب رسالة واتساب رسمية ومهذبة للمواطن ${r.citizenName} بخصوص معاملته ${r.trackingId} "${r.title}"، حالتها ${r.status}، والمستمسكات الناقصة: ${(r.documents||[]).filter(d=>d.status==='missing').map(d=>d.name).join('، ')||'لا يوجد'}. أعد الرسالة فقط بلا مقدمات.`}]);
     const {text}=AI.parseActions(out); const el=$('#waTxt'); if(el){ el.value=text.trim(); $('#waGo').href=waLink(r.phone,text.trim()); }
   }catch(e){ toast('تعذّر الاتصال بالذكاء الاصطناعي: '+e.message,false); }
 }
@@ -1063,7 +1187,7 @@ async function aiDraftWhatsApp(id){
 /* كتاب رسمي */
 function letterText(r){
   const office=state.settings.officeName||APP.office;
-  return `بسم الله الرحمن الرحيم\n\n${office}\n\nالعدد: ${r.officialLetterNumber||'رقم/2026/____'}\nالتاريخ: ${r.officialLetterDate||new Date().toLocaleDateString('ar-IQ')}\n\nإلى / ${r.targetMinistry} المحترم\nم/ ${r.title}\n\nتحية طيبة...\nنحيطكم علماً بأن المستفيد (${r.citizenName}) — المحافظة: ${r.governorate} — قد تقدّم بطلبه المرقم (${r.trackingId}) والمتضمن: ${r.description||r.title}.\n\nنظراً لأهمية الحالة (${r.urgency})، يرجى التفضل بالاطلاع واتخاذ ما يلزم وفق الضوابط والتعليمات النافذة، وإعلامنا بالنتيجة لمتابعة المستفيد.\n\nمع التقدير.\n\nالتوقيع والختم\n${office}`;
+  return `بسم الله الرحمن الرحيم\n\n${office}\n\nالعدد: ${r.officialLetterNumber||'رقم/2026/____'}\nالتاريخ: ${r.officialLetterDate||new Date().toLocaleDateString('ar-IQ')}\n\nإلى / ${r.targetEntity} المحترم\nم/ ${r.title}\n\nتحية طيبة...\nنحيطكم علماً بأن المواطن (${r.citizenName}) — المحافظة: ${r.governorate} — قد تقدّم بطلبه المرقم (${r.trackingId}) والمتضمن: ${r.description||r.title}.\n\nنظراً لأهمية الحالة (${r.urgency})، يرجى التفضل بالاطلاع واتخاذ ما يلزم وفق الضوابط والتعليمات النافذة، وإعلامنا بالنتيجة لمتابعة المواطن.\n\nمع التقدير.\n\nالتوقيع والختم\n${office}`;
 }
 function openLetter(id){
   const r=state.requests.find(x=>x.id===id); if(!r)return;
@@ -1080,7 +1204,7 @@ function openLetter(id){
 }
 async function aiDraftLetter(id){
   const r=state.requests.find(x=>x.id===id); if(!r||!AI.ready())return; toast('جارِ صياغة الكتاب...');
-  try{ const out=await AI.ask([{role:'user',content:`اكتب كتاباً رسمياً كاملاً موجهاً إلى ${r.targetMinistry} بخصوص معاملة المستفيد ${r.citizenName} (${r.trackingId}): ${r.title}. التفاصيل: ${r.description}. بصيغة رسمية حكومية. أعد نص الكتاب فقط.`}]);
+  try{ const out=await AI.ask([{role:'user',content:`اكتب كتاباً رسمياً كاملاً موجهاً إلى ${r.targetEntity} بخصوص معاملة المواطن ${r.citizenName} (${r.trackingId}): ${r.title}. التفاصيل: ${r.description}. بصيغة رسمية حكومية. أعد نص الكتاب فقط.`}]);
     const {text}=AI.parseActions(out); const el=$('#letterPrint'); if(el) el.textContent=text.trim();
   }catch(e){ toast('تعذّر الاتصال: '+e.message,false); }
 }
@@ -1094,9 +1218,9 @@ function printBarcode(id){
   const docsRows=(r.documents||[]).map(d=>`<div class="kv"><span>${esc(d.name)}${d.status==='missing'?' <small style="color:#dc2626">(ناقص)</small>':''}</span><b>${esc(d.value||'—')}</b></div>`).join('');
   w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>وصل ${r.trackingId}</title>
   <style>body{font-family:'Cairo',Arial,sans-serif;padding:24px;max-width:420px;margin:auto}.b{font-weight:800}.c{text-align:center}.box{border:1px solid #cbd5e1;border-radius:12px;padding:16px;margin-top:12px}.kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;font-size:13px}.t{font-weight:800;font-size:13px;margin:0 0 6px}table{width:100%}</style></head>
-  <body><div class="c"><div class="b" style="font-size:16px">${esc(state.settings.officeName||APP.office)}</div><div style="color:#065f46;font-weight:700">منظومة إدارة المعاملات</div><div style="font-size:12px;color:#64748b">وصل استلام معاملة</div></div>
+  <body><div class="c"><div class="b" style="font-size:16px">${esc(state.settings.officeName||APP.office)}</div><div style="color:#065f46;font-weight:700">منظومة إدارة المعاملات والطلبات</div><div style="font-size:12px;color:#64748b">وصل استلام معاملة</div></div>
   <div class="box">${Barcode(r.trackingId)}</div>
-  <div class="box"><div class="kv"><span>رمز المعاملة</span><b>${esc(r.trackingId)}</b></div><div class="kv"><span>اسم المستفيد</span><b>${esc(r.citizenName)}</b></div><div class="kv"><span>عنوان الطلب</span><span>${esc(r.title)}</span></div><div class="kv"><span>المحافظة</span><span>${esc(r.governorate)}</span></div><div class="kv"><span>تاريخ التقديم</span><span>${esc(r.submittedAt)}</span></div><div class="kv"><span>كلمة مرور المتابعة</span><b>${esc(r.accessAccount?r.accessAccount.accessCode:'')}</b></div></div>
+  <div class="box"><div class="kv"><span>رمز المعاملة</span><b>${esc(r.trackingId)}</b></div><div class="kv"><span>اسم المواطن</span><b>${esc(r.citizenName)}</b></div><div class="kv"><span>عنوان الطلب</span><span>${esc(r.title)}</span></div><div class="kv"><span>المحافظة</span><span>${esc(r.governorate)}</span></div><div class="kv"><span>تاريخ التقديم</span><span>${esc(r.submittedAt)}</span></div><div class="kv"><span>كلمة مرور المتابعة</span><b>${esc(r.accessAccount?r.accessAccount.accessCode:'')}</b></div></div>
   ${docsRows?`<div class="box"><div class="t">المستمسكات وأرقامها</div>${docsRows}</div>`:''}
   <p class="c" style="font-size:11px;color:#64748b;margin-top:14px">احتفظ بهذا الوصل — امسح الباركود لمتابعة معاملتك</p>
   <script>window.onload=()=>window.print()<\/script></body></html>`);
@@ -1225,21 +1349,22 @@ async function runAiFilter(){
 function applyLocalSmartFilter(q){
   resetFilters();
   GOVS.forEach(g=>{ if(q.includes(g)) state.filters.gov=g; });
-  URGENCIES.forEach(u=>{ if(q.includes(u)||(/عاجل/.test(q)&&u==='عاجل جداً')) state.filters.urgency=u; });
-  if(/ناقص|نقص/.test(q)) state.filters.docs='ناقصة';
+  REQUEST_TYPES.forEach(t=>{ if(q.includes(t)) state.filters.type=t; });
+  URGENCIES.forEach(u=>{ if(q.includes(u)) state.filters.urgency=u; });
+  if(/عاجل/.test(q)) state.filters.urgency='عاجل';
   STATUSES.forEach(s=>{ if(q.includes(s)) state.filters.status=s; });
   renderBody();
 }
 function executeActions(actions){
   if(!actions||!actions.length)return;
   actions.forEach(a=>{
-    if(a.type==='filter'){ resetFilters(); if(a.status)state.filters.status=a.status; if(a.governorate)state.filters.gov=a.governorate; if(a.urgency)state.filters.urgency=a.urgency; if(a.q)state.filters.q=a.q; if(a.docs)state.filters.docs=a.docs; if(state.mode==='office'&&state.tab!=='dashboard'){state.tab='dashboard';render();} else renderBody(); }
+    if(a.type==='filter'){ resetFilters(); if(a.status)state.filters.status=a.status; if(a.governorate)state.filters.gov=a.governorate; if(a.urgency)state.filters.urgency=a.urgency; if(a.requestType)state.filters.type=a.requestType; if(a.q)state.filters.q=a.q; if(state.mode==='office'&&state.tab!=='dashboard'){state.tab='dashboard';render();} else renderBody(); }
     else if(a.type==='sort'){ sortList(a.by==='date'?'date':a.by==='status'?'status':'urgency'); }
     else if(a.type==='open'){ const r=Store.byTracking(a.trackingId); if(r)openDetail(r.id); }
     else if(a.type==='goto'){ state.tab=a.tab; render(); }
     else if(a.type==='draft_whatsapp'){ const r=Store.byTracking(a.trackingId); if(r)openWhatsApp(r.id); }
     else if(a.type==='draft_letter'){ const r=Store.byTracking(a.trackingId); if(r)openLetter(r.id); }
-    else if(a.type==='audit'){ const r=Store.byTracking(a.trackingId); if(r)reAudit(r.id); }
+    else if(a.type==='audit'){ const r=Store.byTracking(a.trackingId); if(r)openDetail(r.id); }
   });
 }
 function toggleAI(){ state.ai.open=!state.ai.open; renderAIPanel(); }
@@ -1249,7 +1374,7 @@ function renderAIPanel(){
   const msgs=state.ai.messages.map(m=>`<div class="bubble ${m.role==='user'?'u':'a'}">${esc(m.content)}</div>`).join('');
   root.innerHTML=`<div class="ai-panel">
     <div class="ai-head"><div class="flex items-center gap2 b">${icon('sparkle')} المساعد الذكي <span class="chip ${AI.ready()?'st-done':'urg-low'}" style="font-size:10px;padding:2px 7px">${AI.ready()?'متصل':'غير مُفعّل'}</span></div><button class="x" style="color:#a7f3d0" onclick="toggleAI()">${icon('x')}</button></div>
-    <div class="ai-msgs" id="aiMsgs">${msgs||`<div class="bubble a">مرحباً 👋 أنا مساعد المكتب. اسألني عن المعاملات، أو اطلب مني الفرز والترتيب وفتح معاملة أو صياغة كتاب أو رسالة واتساب. مثال: "أظهر الحالات العاجلة في بغداد" أو "افتح المعاملة IQ-2026-4891".</div>`}${state.ai.busy?'<div class="bubble a pulse">...يكتب</div>':''}</div>
+    <div class="ai-msgs" id="aiMsgs">${msgs||`<div class="bubble a">مرحباً 👋 أنا مساعد الإدارة. اسألني عن المعاملات، أو اطلب مني الفرز والترتيب وفتح معاملة أو صياغة كتاب أو رسالة واتساب. مثال: "أظهر الحالات العاجلة في بغداد" أو "افتح المعاملة IQ-2026-4891".</div>`}${state.ai.busy?'<div class="bubble a pulse">...يكتب</div>':''}</div>
     <div class="ai-in"><input id="aiInput" placeholder="${AI.ready()?'اكتب سؤالك أو أمرك...':'فعّل مفتاح API من الإعدادات أولاً'}" onkeydown="if(event.key==='Enter')aiSend()"><button class="btn btn-em" onclick="aiSend()">${icon('send')}</button></div>
   </div>`;
   const m=$('#aiMsgs'); if(m)m.scrollTop=m.scrollHeight;
@@ -1271,8 +1396,10 @@ window.addEventListener('online',()=>{ state.online=true; render(); GAS.push(); 
 window.addEventListener('offline',()=>{ state.online=false; render(); });
 async function boot(){
   Store.load();
-  // تفعيل تلقائي عند فتح رابط #go=
+  // الصفحة العامة للمواطن (بلا دخول/ترخيص)
   const h = location.hash || '';
+  if(/#submit/.test(h)){ renderPublicPage(); return; }
+  // تفعيل تلقائي عند فتح رابط #go=
   if(/[#&]go=/.test(h) || /NBL1\./.test(h)){
     try{ await LIC.activate(h); history.replaceState(null,'', location.pathname+location.search); }catch(e){ /* يظهر في شاشة التفعيل */ }
   }
