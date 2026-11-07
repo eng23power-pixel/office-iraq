@@ -194,7 +194,7 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
    تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
    ========================================================================= */
 const APP = {
-  version: '3.2.0',
+  version: '3.3.0',
   name: 'منظومة إدارة المعاملات والطلبات',
   masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
   office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
@@ -254,14 +254,34 @@ const state = {
   online: navigator.onLine,
   ai: { open:false, busy:false, messages:[] }
 };
-state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office, appName:'', directorName:'', logo:'', cover:'', citizenNotice:'', branches:[], employees:[] }, state.settings);
+// قالب رسالة واتساب التأكيدية (قابل للتعديل) — الحقول: {الجهة} {المدير} {الاسم} {الرقم} {التاريخ} {الكود} {الهاتف} {النوع}
+const DEFAULT_WA_TEMPLATE = `{الجهة}{المدير}
+السلام عليكم ورحمة الله وبركاته
+وصل طلبكم إلى مكتبنا، وتم تسجيله في سجل طلبات المواطنين بالرقم ({الرقم}) بتاريخ ({التاريخ}).
+طلبكم محفوظ برقم التسجيل، وسيُراجَع لتحديد الجهة المختصة والإجراء المناسب. وسنتواصل معكم على رقم الهاتف المسجّل إذا احتجنا إلى استكمال بيانات أو مستندات، أو لإبلاغكم بنتيجة المتابعة.
+يرجى الاحتفاظ برقم الطلب (كلمة المرور: {الكود}) وذكره عند الاستفسار أو المراجعة. لا حاجة إلى إعادة التقديم، وخدمات المكتب مجانية.
+مع التقدير والاحترام.`;
+function fillTemplate(tpl, r){
+  const d=(r.submittedAt||nowStr()).slice(0,10).split('-'); const date=d.length===3?(d[2]+' / '+d[1]+' / '+d[0]):(r.submittedAt||'');
+  const dir=state.settings.directorName?('\n'+state.settings.directorName):'';
+  return String(tpl||DEFAULT_WA_TEMPLATE)
+    .replace(/\{الجهة\}/g, orgName())
+    .replace(/\{المدير\}/g, dir)
+    .replace(/\{الاسم\}/g, r.citizenName||'')
+    .replace(/\{الرقم\}|\{رمز\}/g, r.trackingId||'')
+    .replace(/\{التاريخ\}/g, date)
+    .replace(/\{الكود\}/g, (r.accessAccount&&r.accessAccount.accessCode)||'')
+    .replace(/\{الهاتف\}/g, r.phone||'')
+    .replace(/\{النوع\}/g, r.requestType||'');
+}
+state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office, appName:'', directorName:'', logo:'', cover:'', citizenNotice:'', waConfirmTemplate:DEFAULT_WA_TEMPLATE, branches:[], employees:[] }, state.settings);
 if(state.settings.geminiModel==='gemini-1.5-flash'||state.settings.geminiModel==='gemini-pro'||!state.settings.geminiModel){ state.settings.geminiModel='gemini-flash-latest'; }
 // تنظيف أي اسم جهة قديم محفوظ من إصدارات سابقة (يعود الاسم محايداً حتى يضبطه رابط الترخيص)
 if(state.settings.officeName && /(مكتب|النائب|شؤون المواطن)/.test(state.settings.officeName)){ state.settings.officeName=''; }
 function saveSettings(){ try{ localStorage.setItem('naib_settings', JSON.stringify(state.settings)); return true; }catch(e){ if(typeof toast==='function') toast('تعذّر الحفظ محلياً (الصورة كبيرة؟). جرّب صورة أصغر.', false); return false; } }
 // مزامنة الهوية/التعليمات سحابياً (لتظهر على كل الأجهزة)
-function brandingMeta(){ const s=state.settings; return {appName:s.appName||'',directorName:s.directorName||'',logo:s.logo||'',cover:s.cover||'',citizenNotice:s.citizenNotice||'',officeName:s.officeName||''}; }
-function applyMeta(m){ if(!m)return; const s=state.settings; ['appName','directorName','logo','cover','citizenNotice'].forEach(k=>{ if(m[k]!=null && m[k]!=='') s[k]=m[k]; }); saveSettings(); }
+function brandingMeta(){ const s=state.settings; return {appName:s.appName||'',directorName:s.directorName||'',logo:s.logo||'',cover:s.cover||'',citizenNotice:s.citizenNotice||'',waConfirmTemplate:s.waConfirmTemplate||'',officeName:s.officeName||''}; }
+function applyMeta(m){ if(!m)return; const s=state.settings; ['appName','directorName','logo','cover','citizenNotice','waConfirmTemplate'].forEach(k=>{ if(m[k]!=null && m[k]!=='') s[k]=m[k]; }); saveSettings(); }
 
 /* ===========================================================================
    الترخيص السحابي الموحّد (نفس نظام RetailPro / RestoCafe / رُقيّ / المخزن)
@@ -1229,17 +1249,20 @@ function createRequest(pub){
     timeline:[{id:'t1',timestamp:nowStr(),title:'استلام الطلب وتسجيله',description:'عبر '+(pub?'الرابط العام':'الاستقبال')+(subVal?' — '+subVal:''),actor:state.settings.officeName||APP.office,status:'current'}],
     staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
   Store.upsert(req); window.__att=[]; closeModal(); if(!pub) render();
-  const msg=`عزيزي المواطن ${name}\nتم استلام وتسجيل طلبكم لدى ${state.settings.officeName||APP.office}.\nرمز المتابعة: ${t}\nكلمة المرور: ${code}\nيمكنكم متابعة حالة طلبكم عبر المنظومة.`;
+  const msg=fillTemplate(state.settings.waConfirmTemplate, req);
   openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل الطلب</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
-    <div class="modal-b center">
-      <div class="barcode-box mb3">${Barcode(t)}</div>
-      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="kv"><span class="muted">رمز المتابعة</span><b class="mono">${t}</b></div><div class="kv"><span class="muted">كلمة المرور</span><b class="mono em">${code}</b></div></div>
+    <div class="modal-b">
+      <div class="center"><div class="barcode-box mb3">${Barcode(t)}</div>
+      <div class="card pad4 mb3" style="background:var(--em-50)"><div class="kv"><span class="muted">رمز المتابعة</span><b class="mono">${t}</b></div><div class="kv"><span class="muted">كلمة المرور</span><b class="mono em">${code}</b></div></div></div>
+      <div class="field"><label>رسالة واتساب التأكيدية (يمكن تعديلها قبل الإرسال)</label><textarea id="confirmWa" rows="8" style="line-height:1.8">${esc(msg)}</textarea></div>
       <div class="flex gap2 justify-center wrap">
-        <a class="btn btn-wa" href="${waLink(phone,msg)}" target="_blank">${icon('wa')} إرسال البيانات للمواطن</a>
+        <a class="btn btn-wa" id="confirmWaBtn" href="${waLink(phone,msg)}" target="_blank">${icon('wa')} إرسال للمواطن عبر واتساب</a>
+        <button class="btn btn-white" onclick="copyText(document.getElementById('confirmWa').value)">${icon('copy')} نسخ</button>
         ${pub?'':`<button class="btn btn-white" onclick="printBarcode('${req.id}')">${icon('print')} طباعة الوصل</button>`}
         <button class="btn btn-gray" onclick="closeModal()">تم</button>
       </div>
-    </div>`,'460px');
+    </div>`,'520px');
+  const ta=$('#confirmWa'); if(ta) ta.oninput=()=>{ const bn=$('#confirmWaBtn'); if(bn) bn.href=waLink(phone, ta.value); };
 }
 function officeList(){ const s=new Set(); state.requests.forEach(r=>{ if(r.office) s.add(r.office); }); state.settings.branches.forEach(b=>s.add(b.code?b.code+' '+b.name:b.name)); return [...s]; }
 function detailAddFiles(id,files){ const r=state.requests.find(x=>x.id===id); if(!r)return; r.attachments=r.attachments||[]; const before=r.attachments.length;
@@ -1394,6 +1417,9 @@ function openSettings(){
         <input type="file" id="setCover" accept="image/*" style="display:none" onchange="pickCover(this.files[0])">
         <div class="flex gap2"><button type="button" class="btn btn-white btn-sm" onclick="document.getElementById('setCover').click()">${icon('cam')} ${s.cover?'استبدال':'إضافة'} صورة الغلاف</button>${s.cover?`<button type="button" class="btn btn-gray btn-sm" onclick="state.settings.cover='';saveSettings();document.getElementById('coverPreview').innerHTML='';toast('أُزيلت صورة الغلاف')">إزالة</button>`:''}</div></div>
       <div class="field"><label>تعليمات/إعلان للمواطن (يظهر في صفحة المواطن)</label><textarea id="setNotice" rows="4" placeholder="اكتب هنا التحديثات أو التعليمات التي تريد أن يراها المواطنون...">${esc(s.citizenNotice||'')}</textarea></div>
+      <div class="field"><label>قالب رسالة واتساب عند إكمال التقديم</label><textarea id="setWaTpl" rows="8" style="line-height:1.7">${esc(s.waConfirmTemplate||DEFAULT_WA_TEMPLATE)}</textarea>
+        <div class="txt-xs muted2 mt1">حقول تُملأ تلقائياً: <b class="mono">{الجهة} {المدير} {الاسم} {الرقم} {التاريخ} {الكود} {الهاتف} {النوع}</b></div>
+        <button type="button" class="btn btn-gray btn-sm mt1" onclick="document.getElementById('setWaTpl').value=DEFAULT_WA_TEMPLATE">استعادة القالب الافتراضي</button></div>
       <div class="txt-xs muted2 mb3">اسم الجهة الأساسي من رابط الترخيص (${esc(s.officeName||APP.office)}). ${s.gasUrl?'الهوية والتعليمات تُزامَن سحابياً فتظهر على كل الأجهزة.':'اربط كوكل سكربت لتظهر الهوية والتعليمات على كل الأجهزة.'}</div>
       <button class="btn btn-dark btn-sm" style="width:100%;justify-content:center" onclick="closeModal();openStaff()">${icon('user')} إعداد الموظفين والفروع والأدوار</button>
       <div class="field mt3"><label>كلمة مرور المدير (احتياطية)</label><input id="setPass" type="text" value="${esc(s.staffPass||'123456')}"></div>
@@ -1477,6 +1503,7 @@ function saveSettingsUI(){
   const s=state.settings;
   s.appName=$('#setAppName').value.trim(); s.directorName=$('#setDirector').value.trim();
   const nt=$('#setNotice'); if(nt)s.citizenNotice=nt.value;
+  const wt=$('#setWaTpl'); if(wt)s.waConfirmTemplate=wt.value||DEFAULT_WA_TEMPLATE;
   s.staffPass=$('#setPass').value||'123456';
   if(s.gasUrl) GAS.pushMeta();
   s.aiProvider=$('#setProvider').value;
