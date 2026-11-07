@@ -194,7 +194,7 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
    تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
    ========================================================================= */
 const APP = {
-  version: '3.3.0',
+  version: '3.4.0',
   name: 'منظومة إدارة المعاملات والطلبات',
   masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
   office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
@@ -252,6 +252,7 @@ const state = {
   filters: { q:'', gov:'الكل', type:'الكل', office:'الكل', urgency:'الكل', status:'الكل' },
   viewMode: 'list', groupBy: 'requestType',
   online: navigator.onLine,
+  public: false,
   ai: { open:false, busy:false, messages:[] }
 };
 // قالب رسالة واتساب التأكيدية (قابل للتعديل) — الحقول: {الجهة} {المدير} {الاسم} {الرقم} {التاريخ} {الكود} {الهاتف} {النوع}
@@ -281,7 +282,7 @@ if(state.settings.officeName && /(مكتب|النائب|شؤون المواطن)
 function saveSettings(){ try{ localStorage.setItem('naib_settings', JSON.stringify(state.settings)); return true; }catch(e){ if(typeof toast==='function') toast('تعذّر الحفظ محلياً (الصورة كبيرة؟). جرّب صورة أصغر.', false); return false; } }
 // مزامنة الهوية/التعليمات سحابياً (لتظهر على كل الأجهزة)
 function brandingMeta(){ const s=state.settings; return {appName:s.appName||'',directorName:s.directorName||'',logo:s.logo||'',cover:s.cover||'',citizenNotice:s.citizenNotice||'',waConfirmTemplate:s.waConfirmTemplate||'',officeName:s.officeName||''}; }
-function applyMeta(m){ if(!m)return; const s=state.settings; ['appName','directorName','logo','cover','citizenNotice','waConfirmTemplate'].forEach(k=>{ if(m[k]!=null && m[k]!=='') s[k]=m[k]; }); saveSettings(); }
+function applyMeta(m){ if(!m)return; const s=state.settings; ['appName','directorName','logo','cover','citizenNotice','waConfirmTemplate','officeName'].forEach(k=>{ if(m[k]!=null) s[k]=m[k]; }); saveSettings(); }
 
 /* ===========================================================================
    الترخيص السحابي الموحّد (نفس نظام RetailPro / RestoCafe / رُقيّ / المخزن)
@@ -388,7 +389,7 @@ const Store = {
   sortRecent(){ state.requests.sort((a,b)=> String(b.submittedAt||'').localeCompare(String(a.submittedAt||''))); },
   persist(){ try{ localStorage.setItem('naib_requests', JSON.stringify(state.requests)); }catch(e){ if(typeof toast==='function') toast('مساحة التخزين ممتلئة — صدّر نسخة احتياطية', false); } },
   byTracking(t){ t=String(t||'').trim().toLowerCase(); return state.requests.find(r=> r.trackingId.toLowerCase()===t || r.phone===t || (r.accessAccount&&r.accessAccount.accessCode&&r.accessAccount.accessCode.toLowerCase()===t)); },
-  upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(state.settings.gasUrl) GAS.push(); },
+  upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(!state.public && state.settings.gasUrl) GAS.push(); },
   stats(){ const s={total:state.requests.length,neww:0,waitingDocs:0,letters:0,done:0,sorted:0}; state.requests.forEach(r=>{ if(r.status==='جديد')s.neww++; if(r.status==='يحتاج استكمالاً'||r.status==='بانتظار مستند أو توضيح')s.waitingDocs++; if(r.status==='كتاب ينتظر التوقيع'||r.status==='أُحيل بكتاب رسمي')s.letters++; if(r.status==='منجز')s.done++; if(r.status==='مفرز — ضمن كتاب/ملف موحّد')s.sorted++; }); return s; },
   newTracking(){ let n=0; state.requests.forEach(r=>{ const m=/CIT-2026-(\d+)/.exec(r.trackingId||''); if(m) n=Math.max(n, parseInt(m[1],10)); }); return 'CIT-2026-'+String(n+1).padStart(6,'0'); },
   importRestore(obj, mode){ // mode: 'replace' | 'merge'
@@ -423,6 +424,10 @@ const GAS = {
       if(data && data.meta){ try{ applyMeta(typeof data.meta==='string'?JSON.parse(data.meta):data.meta); }catch(e){} }
       return {ok:true};
     }catch(e){ return {ok:false, error:e.message}; }
+  },
+  async saveOne(req){
+    if(!state.settings.gasUrl||!state.online) return {ok:false};
+    try{ const res=await fetch(state.settings.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'SAVE_REQUEST', request:req})}); await res.json().catch(()=>({})); return {ok:true}; }catch(e){ return {ok:false, error:e.message}; }
   },
   async pushMeta(){
     if(!state.settings.gasUrl||!state.online) return {ok:false};
@@ -1057,13 +1062,14 @@ function exportLedger(){
   toast('تم تصدير '+list.length+' طلب إلى إكسل (CSV)');
 }
 /* ---------------- الرابط العام للمواطن + QR ---------------- */
-function publicUrl(){ return location.origin+location.pathname+'#submit'; }
+function publicUrl(){ let u=location.origin+location.pathname+'#submit'; if(state.settings.gasUrl) u+='&db='+encodeURIComponent(state.settings.gasUrl); return u; }
 function qrImg(data,size){ return `https://api.qrserver.com/v1/create-qr-code/?size=${size||220}x${size||220}&margin=8&data=${encodeURIComponent(data)}`; }
 function openPublicLink(){
   const u=publicUrl();
   openModal(`<div class="modal-h" style="background:var(--em-900);color:#fff;justify-content:space-between"><div class="b">${icon('globe')} الرابط العام لتقديم الطلبات</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b center">
       <p class="txt-sm muted mb3">شارك هذا الرابط أو رمز QR مع المواطنين ليقدّموا طلباتهم مباشرة (بوابة عامة بلا دخول).</p>
+      ${state.settings.gasUrl?`<div class="chip st-done" style="width:100%;justify-content:center;padding:7px;margin-bottom:10px">${icon('check2')} الرابط يحمل الخادم السحابي: تظهر الصورة والتعليمات وتصل الطلبات للإدارة على كل الأجهزة</div>`:`<div class="chip urg-mid" style="width:100%;justify-content:center;padding:7px;margin-bottom:10px;line-height:1.6">${icon('alert')} لم تربط كوكل سكربت — لن تظهر الصور/التعليمات على أجهزة المواطنين ولن تصل طلباتهم للإدارة. اربط كوكل أولاً من «ربط كوكل».</div>`}
       <div class="card pad4 mb3" style="display:inline-block"><img src="${qrImg(u,220)}" alt="QR" width="200" height="200" style="display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div style="display:none" class="txt-xs muted">يتطلب اتصالاً لعرض الـ QR</div></div>
       <div class="flex gap2"><input class="mono txt-xs" value="${esc(u)}" readonly><button class="btn btn-gray shrink0" onclick="navigator.clipboard.writeText('${esc(u)}');toast('نُسخ الرابط')">${icon('copy')}</button></div>
       <div class="flex gap2 justify-center wrap mt3">
@@ -1237,7 +1243,8 @@ function createRequest(pub){
     if(!mother || mother.split(/\s+/).filter(Boolean).length<2){ toast('طلبات الرعاية الاجتماعية: اسم الأم الثلاثي إلزامي', false); return; }
     if(!docs.length && !att.length){ toast('طلبات الرعاية الاجتماعية: إرفاق المستمسكات إلزامي', false); return; }
   }
-  const t=Store.newTracking(); const code='CIT'+t.split('-')[2].slice(-4);
+  const t = pub ? ('CIT-2026-9'+String(10000+Math.floor(Math.random()*89999))) : Store.newTracking();
+  const code='CIT'+t.split('-')[2].slice(-4);
   const sub=$('#nSubReq'); const subVal=($('#subReqWrap').style.display!=='none'&&sub)?sub.value:'';
   const req={ id:'req-'+t, trackingId:t, citizenName:name, motherName:mother, phone, governorate:$('#nGov').value.trim(), district:$('#nDist').value.trim(),
     requestType:type, subRequest:subVal, targetEntity:normalizeEntity($('#nEntity').value.trim()),
@@ -1249,6 +1256,7 @@ function createRequest(pub){
     timeline:[{id:'t1',timestamp:nowStr(),title:'استلام الطلب وتسجيله',description:'عبر '+(pub?'الرابط العام':'الاستقبال')+(subVal?' — '+subVal:''),actor:state.settings.officeName||APP.office,status:'current'}],
     staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
   Store.upsert(req); window.__att=[]; closeModal(); if(!pub) render();
+  if(pub && state.settings.gasUrl && state.online){ GAS.saveOne(req); }
   const msg=fillTemplate(state.settings.waConfirmTemplate, req);
   openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل الطلب</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b">
@@ -1580,10 +1588,16 @@ async function aiSend(){
 window.addEventListener('online',()=>{ state.online=true; render(); GAS.push(); });
 window.addEventListener('offline',()=>{ state.online=false; render(); });
 async function boot(){
-  Store.load();
-  // الصفحة العامة للمواطن (بلا دخول/ترخيص)
   const h = location.hash || '';
-  if(/#submit/.test(h)){ renderPublicPage(); return; }
+  // الصفحة العامة للمواطن (بلا دخول/ترخيص) — تجلب الهوية والتعليمات من السحابة
+  if(/#submit/.test(h)){
+    state.public=true; state.requests=[];
+    const m=h.match(/[#&]db=([^&]+)/); if(m){ try{ state.settings.gasUrl=decodeURIComponent(m[1]); }catch(e){} }
+    $('#app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#64748b">… جارِ التحميل …</div>';
+    if(state.settings.gasUrl && state.online){ try{ await GAS.pullMeta(); }catch(e){} }
+    renderPublicPage(); return;
+  }
+  Store.load();
   // تفعيل تلقائي عند فتح رابط #go=
   if(/[#&]go=/.test(h) || /NBL1\./.test(h)){
     try{ await LIC.activate(h); history.replaceState(null,'', location.pathname+location.search); }catch(e){ /* يظهر في شاشة التفعيل */ }
