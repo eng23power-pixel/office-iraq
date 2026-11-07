@@ -194,14 +194,15 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
    تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
    ========================================================================= */
 const APP = {
-  version: '3.0.0',
+  version: '3.1.0',
   name: 'منظومة إدارة المعاملات والطلبات',
   masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
   office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
   brandLine: ''
 };
 // علامة محايدة بدل الشعار الرسمي (يمكن ضبط شعار الجهة لاحقاً من الترخيص)
-function brandMark(sz){ const s=sz||40; return `<div class="brandmark" style="width:${s}px;height:${s}px">${icon('building','ic')}</div>`; }
+function brandMark(sz){ const s=sz||40; if(state.settings&&state.settings.logo){ return `<div class="brandmark" style="width:${s}px;height:${s}px;padding:0;overflow:hidden"><img src="${state.settings.logo}" alt="شعار" style="width:100%;height:100%;object-fit:cover"></div>`; } return `<div class="brandmark" style="width:${s}px;height:${s}px">${icon('building','ic')}</div>`; }
+function orgName(){ return state.settings.appName || state.settings.officeName || APP.office; }
 
 /* ---------- أدوات عامة ---------- */
 const $ = (s,el=document)=>el.querySelector(s);
@@ -252,7 +253,7 @@ const state = {
   online: navigator.onLine,
   ai: { open:false, busy:false, messages:[] }
 };
-state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office }, state.settings);
+state.settings = Object.assign({ gasUrl:'', aiProvider:'gemini', geminiKey:'', geminiModel:'gemini-flash-latest', claudeKey:'', claudeModel:'claude-sonnet-4-5', officeName:APP.office, appName:'', directorName:'', logo:'', branches:[], employees:[] }, state.settings);
 if(state.settings.geminiModel==='gemini-1.5-flash'||state.settings.geminiModel==='gemini-pro'||!state.settings.geminiModel){ state.settings.geminiModel='gemini-flash-latest'; }
 // تنظيف أي اسم جهة قديم محفوظ من إصدارات سابقة (يعود الاسم محايداً حتى يضبطه رابط الترخيص)
 if(state.settings.officeName && /(مكتب|النائب|شؤون المواطن)/.test(state.settings.officeName)){ state.settings.officeName=''; }
@@ -619,8 +620,8 @@ function renderHeader(){
       <div class="flex items-center gap3 shrink0">
         ${brandMark(40)}
         <div class="flex col">
-          <span class="b" style="font-size:14px">${esc(state.settings.officeName||APP.office)}</span>
-          <span class="txt-xs em sb">منظومة إدارة المعاملات والطلبات</span>
+          <span class="b" style="font-size:14px">${esc(orgName())}</span>
+          <span class="txt-xs em sb">${esc(state.settings.directorName?('إدارة: '+state.settings.directorName):'منظومة إدارة المعاملات والطلبات')}</span>
         </div>
       </div>
 
@@ -718,8 +719,9 @@ function citizenSendDocs(t){
 
 /* ------------------------------- واجهة الإدارة ------------------------------- */
 function filtered(){
-  const f=state.filters;
+  const f=state.filters; const se=state.session;
   return state.requests.filter(r=>{
+    if(se && !se.master && se.perms && !se.perms.allBranches && se.branchName){ if((r.office||'')!==se.branchName) return false; }
     if(f.q){ const s=f.q.toLowerCase(); if(!(r.trackingId.toLowerCase().includes(s)||(r.citizenName||'').includes(f.q)||(r.phone||'').includes(f.q)||(r.description||'').includes(f.q)||(r.targetEntity||'').includes(f.q))) return false; }
     if(f.status!=='الكل'&&r.status!==f.status)return false;
     if(f.gov!=='الكل'&&r.governorate!==f.gov)return false;
@@ -904,20 +906,23 @@ function openLogin(){
       <button class="x" style="color:#94a3b8" onclick="closeModal()">${icon('x')}</button>
     </div>
     <div class="modal-b">
-      <div class="field"><label>اسم الموظف / المستخدم</label><input id="lgName" value="موظف الجهة"></div>
-      <div class="field"><label>كلمة المرور</label><input id="lgPass" type="password" value="" placeholder="••••••"></div>
+      ${state.settings.employees.length?`<div class="field"><label>اختر الموظف</label><select id="lgEmp">${state.settings.employees.map((e,i)=>`<option value="${i}">${esc(e.name)} — ${esc(e.role)}${e.branchName?' ('+esc(e.branchName)+')':''}</option>`).join('')}<option value="-1">— المدير (كلمة مرور احتياطية) —</option></select></div>`:''}
+      <div class="field"><label>رمز الدخول / كلمة المرور</label><input id="lgPass" type="password" value="" placeholder="••••••"></div>
       <div class="chip st-done" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px">${icon('check2')} البرنامج مُفعّل بالترخيص السحابي</div>
       <button class="btn btn-dark" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">${icon('shield')} دخول</button>
-      <p class="txt-xs muted2 center mt3">كلمة المرور الافتراضية لأول دخول: <b class="mono">123456</b> (يمكن تغييرها من الإعدادات)</p>
+      <p class="txt-xs muted2 center mt3">${state.settings.employees.length?'اختر اسمك وأدخل رمزك. المدير يدخل بكلمة المرور الاحتياطية.':'أول دخول للمدير بكلمة المرور الافتراضية <b class="mono">123456</b>، ثم أنشئ الموظفين من الإعدادات.'}</p>
     </div>`,'440px');
 }
 function doLogin(){
-  const name=$('#lgName').value.trim()||'موظف الجهة'; const pass=$('#lgPass').value;
-  const stored = state.settings.staffPass || '123456';
-  if(pass!==stored){ toast('كلمة المرور غير صحيحة', false); return; }
-  state.session={ name, role:'موظف الجهة', loginAt:nowStr() };
+  const pass=$('#lgPass').value; const empSel=$('#lgEmp'); const idx=empSel?parseInt(empSel.value,10):-1;
+  if(idx>=0){ const e=state.settings.employees[idx]; if(!e||pass!==(e.pass||'0000')){ toast('رمز الدخول غير صحيح',false); return; }
+    state.session={ name:e.name, role:e.role, branchName:e.branchName||'', phone:e.phone||'', perms:e.perms||roleDefaults(e.role), master:false, loginAt:nowStr() };
+  } else {
+    const stored=state.settings.staffPass||'123456'; if(pass!==stored){ toast('كلمة المرور غير صحيحة', false); return; }
+    state.session={ name:'المدير', role:'رئيس المكتب', master:true, perms:roleDefaults('رئيس المكتب'), loginAt:nowStr() };
+  }
   localStorage.setItem('naib_session', JSON.stringify(state.session));
-  closeModal(); state.mode='office'; state.tab='secretary-quick'; render(); toast('مرحباً '+name);
+  closeModal(); state.mode='office'; state.tab='secretary-quick'; render(); toast('مرحباً '+state.session.name);
 }
 
 /* تفاصيل المعاملة + التحديث */
@@ -929,7 +934,13 @@ function openDetail(id){
       <button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button>
     </div>
     <div class="modal-b">
-      <div class="barcode-box mb3">${Barcode(r.trackingId)}<div class="flex gap2 justify-center mt2 wrap"><button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة الوصل</button>${r.driveLink?`<a class="btn btn-white btn-sm" href="${esc(r.driveLink)}" target="_blank">${icon('ext')} مستمسكات Drive</a>`:''}</div></div>
+      <div class="barcode-box mb3">${Barcode(r.trackingId)}<div class="flex gap2 justify-center mt2 wrap"><button class="btn btn-white btn-sm" onclick="printBarcode('${r.id}')">${icon('print')} طباعة الوصل</button></div></div>
+      ${r.motherName?`<div class="kv txt-sm"><span class="muted">اسم الأم</span><span class="sb">${esc(r.motherName)}</span></div>`:''}
+      <div class="field"><label>المرفقات (${(r.attachments||[]).length})</label>
+        <div class="flex gap2 wrap mb2">${(r.attachments||[]).map((a,i)=>a.type&&a.type.startsWith('image/')?`<a href="${a.dataUrl}" target="_blank" title="${esc(a.name)}"><img src="${a.dataUrl}" style="width:58px;height:58px;object-fit:cover;border-radius:8px;border:1px solid var(--sl-200)"></a>`:`<a class="chip st-recv" style="padding:6px 10px" href="${a.dataUrl}" download="${esc(a.name)}">${icon('file')} ${esc(a.name.slice(0,16))}</a>`).join('')||'<span class="muted txt-sm">لا توجد مرفقات</span>'}</div>
+        <input type="file" id="dFiles" accept="image/*,application/pdf" multiple style="display:none" onchange="detailAddFiles('${r.id}',this.files)">
+        <button type="button" class="btn btn-white btn-sm" onclick="document.getElementById('dFiles').click()">${icon('cam')} رفع ملف من الجهاز</button>
+      </div>
       <div class="field"><label>الطلب (كما قاله المواطن)</label><div class="card pad3 txt-sm" style="line-height:1.9;max-height:160px;overflow:auto">${esc(r.description||r.title)}</div></div>
       <div class="grid g2 gap3">
         <div class="field"><label>نوع الطلب</label><input id="dType" list="dTypeL" value="${esc(r.requestType||'')}"><datalist id="dTypeL">${REQUEST_TYPES.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
@@ -953,6 +964,7 @@ function openDetail(id){
     </div>`,'640px');
 }
 function saveDetail(id){
+  if(state.session && !can('edit')){ toast('لا تملك صلاحية التعديل (عرض فقط)', false); return; }
   const r=state.requests.find(x=>x.id===id); if(!r)return;
   const oldStatus=r.status;
   r.requestType=$('#dType').value.trim(); r.targetEntity=normalizeEntity($('#dEntity').value.trim());
@@ -964,6 +976,7 @@ function saveDetail(id){
 }
 /* ---------------- تصدير إكسل/CSV ذكي (مفلتر) ---------------- */
 function exportLedger(){
+  if(state.session && !can('export')){ toast('لا تملك صلاحية التصدير', false); return; }
   const list=filtered();
   const cols=['رمز المتابعة','تاريخ الاستلام','الاسم الرباعي','الهاتف','المحافظة','القضاء/الحي','نوع الطلب','الجهة المعنية','الطلب','فرد/مجموعة','المستند','الحالة','الأولوية','المكتب/الفرع','موظف الاستقبال','القناة','رقم الوارد','رقم الصادر','آخر تحديث'];
   const rows=list.map(r=>[r.trackingId,r.submittedAt,r.citizenName,r.phone,r.governorate,r.district,r.requestType,r.targetEntity,(r.description||'').replace(/\n/g,' '),r.scope,r.documentState,r.status,r.urgency,r.office,r.receptionEmployee,r.channel,r.registryIn,r.registryOut,r.updatedAt]);
@@ -991,17 +1004,16 @@ function openPublicLink(){
 }
 function renderPublicPage(){
   $('#app').innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column">
-    <div class="hero pad6" style="text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(54)}</div>
-      <div class="txt-xl b">${esc(state.settings.officeName||APP.office)}</div>
-      <div class="txt-sm mt1" style="color:var(--em-200)">بوابة تقديم الطلبات ومتابعتها</div></div>
-    <div class="wrapmax" style="padding:20px 16px;flex:1">
-      <div class="card pad5 mb4"><div class="b mb2">${icon('search')} متابعة طلب سابق</div>
-        <div class="flex gap2 wrap"><input id="trackInput" class="grow" placeholder="رمز المتابعة أو رقم الهاتف" style="min-width:180px"><button class="btn btn-em" onclick="doTrack()">${icon('search')} استعلام</button></div>
-        <div id="trackResult" class="mt3"></div></div>
-      <div class="card pad5 center"><div class="b mb2">${icon('plus')} تقديم طلب جديد</div><p class="txt-sm muted mb3">قدّم طلبك إلكترونياً واحصل على رمز متابعة فوري.</p>
-        <button class="btn btn-em" onclick="openNewRequest(true)">${icon('plus')} ابدأ التقديم</button></div>
+    <div class="hero pad6" style="text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(60)}</div>
+      <div class="txt-2xl b">${esc(orgName())}</div>
+      ${state.settings.directorName?`<div class="txt-sm mt1" style="color:var(--em-100)">${esc(state.settings.directorName)}</div>`:''}
+      <div class="txt-sm mt2" style="color:var(--em-200)">بوابة تقديم الطلبات والمناشدات</div></div>
+    <div class="wrapmax" style="padding:24px 16px;flex:1;max-width:720px">
+      <div class="card pad6 center" style="border-color:var(--em-300)"><div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(48)}</div>
+        <div class="b txt-lg mb2">تقديم طلب جديد</div><p class="txt-sm muted mb4" style="line-height:1.9">قدّم طلبك أو مناشدتك إلكترونياً بسهولة، وستصلك رسالة واتساب برمز المتابعة فور الإرسال.</p>
+        <button class="btn btn-em" style="padding:12px 28px;font-size:15px" onclick="openNewRequest(true)">${icon('plus')} ابدأ تقديم الطلب</button></div>
     </div>
-    <footer class="center txt-xs muted2" style="padding:14px">منظومة إدارة المعاملات والطلبات</footer>
+    <footer class="center txt-xs muted2" style="padding:16px">${esc(orgName())} — منظومة إدارة المعاملات والطلبات</footer>
     <div id="modalRoot"></div></div>`;
 }
 /* ---------------- النسخ الاحتياطي والاسترجاع ---------------- */
@@ -1093,6 +1105,7 @@ function openNewRequest(pub){
       <div class="grid g2 gap3">
         <div class="field"><label>الاسم الرباعي واللقب *</label><input id="nName" placeholder="الاسم / الأب / الجد / اللقب" oninput="nameHint(this)"><div id="nNameHint" class="txt-xs muted2 mt1"></div></div>
         <div class="field"><label>رقم الهاتف *</label><input id="nPhone" class="mono" placeholder="07xxxxxxxxx"></div>
+        <div class="field" id="nMotherWrap"><label>اسم الأم الثلاثي <span id="nMotherReq" class="muted2">(للرعاية: إلزامي)</span></label><input id="nMother" placeholder="اسم الأم"></div>
         <div class="field"><label>المحافظة</label><input id="nGov" list="govList" value="البصرة"><datalist id="govList">${GOVS.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
         <div class="field"><label>القضاء / الناحية / الحي</label><input id="nDist" placeholder="مثال: أبي الخصيب - مهيجران"></div>
         <div class="field"><label>نوع الطلب</label><select id="nType" onchange="subReqUi()">${REQUEST_TYPES.map(g=>`<option>${g}</option>`).join('')}</select></div>
@@ -1104,7 +1117,11 @@ function openNewRequest(pub){
         <div class="field"><label>هل لدى المواطن مستند؟</label><select id="nDocState"><option>نعم — صُوِّر</option><option>نعم — سيرسله لاحقاً</option><option>لا</option><option>غير مُدخل</option></select></div>
       </div>
       <div class="field"><label>الطلب (كما قاله المواطن) *</label><textarea id="nDesc" rows="3" placeholder="اكتب نص الطلب بالتفصيل..."></textarea></div>
-      <div class="field"><label>رابط المستمسكات على Google Drive (صور/PDF جودة عالية)</label><input id="nDrive" class="mono txt-xs" placeholder="https://drive.google.com/..."></div>
+      <div class="field"><label>رفع المستمسكات من الجهاز (صور / PDF)</label>
+        <input type="file" id="nFiles" accept="image/*,application/pdf" multiple style="display:none" onchange="addAttachments(this.files)">
+        <button type="button" class="btn btn-white" style="width:100%;justify-content:center;padding:11px" onclick="document.getElementById('nFiles').click()">${icon('cam')} اختر ملفات من الجهاز لرفعها</button>
+        <div id="attChips" class="flex gap2 wrap mt2"></div>
+        <div class="txt-xs muted2 mt1">تُحفظ الصور بعد ضغطها داخل الطلب. يمكن التقاط صورة بكاميرا الهاتف مباشرة.</div></div>
       ${pub?'':`<div class="card pad3 mb3" style="background:var(--sl-50)"><div class="b txt-sm mb2 em">${icon('shield')} حقول داخلية (للموظف فقط)</div>
       <div class="grid g2 gap3">
         <div class="field" style="margin:0"><label>الأولوية (داخلي)</label><select id="nUrg">${URGENCIES.map(g=>`<option ${g==='اعتيادي'?'selected':''}>${g}</option>`).join('')}</select></div>
@@ -1115,28 +1132,51 @@ function openNewRequest(pub){
       <div class="field"><label>المستمسكات (اسم المستند ورقمه)</label>${docsEditor('newDocRows', null, true)}</div>
       <button class="btn btn-em" style="width:100%;justify-content:center;padding:11px" onclick="createRequest(${pub?'true':'false'})">${icon('check')} ${pub?'إرسال الطلب':'تسجيل الطلب وتوليد الرمز'}</button>
     </div>`,'680px');
-  subReqUi();
+  window.__att=[]; renderAttChips(); subReqUi();
 }
+function isWelfare(type){ return /رعاية|الرعاية الاجتماعية|راتب أو تقاعد أو رعاية/.test(type||''); }
 function nameHint(el){ const parts=el.value.trim().split(/\s+/).filter(Boolean); const h=$('#nNameHint'); if(!h)return; h.textContent = parts.length>=4?'✓ اسم رباعي':(el.value.trim()?('يُفضّل الاسم الرباعي واللقب ('+parts.length+' مقاطع)'):''); h.style.color=parts.length>=4?'var(--em-700)':'var(--sl-400)'; }
-function subReqUi(){ const t=$('#nType'); if(!t)return; const subs=SUBREQUIREMENTS[t.value]; const w=$('#subReqWrap'), s=$('#nSubReq'); if(subs&&subs.length){ s.innerHTML=subs.map(x=>`<option>${esc(x)}</option>`).join(''); w.style.display=''; } else { w.style.display='none'; } }
+function subReqUi(){ const t=$('#nType'); if(!t)return; const subs=SUBREQUIREMENTS[t.value]; const w=$('#subReqWrap'), s=$('#nSubReq'); if(subs&&subs.length){ s.innerHTML=subs.map(x=>`<option>${esc(x)}</option>`).join(''); w.style.display=''; } else { w.style.display='none'; }
+  const wf=isWelfare(t.value); const mr=$('#nMotherReq'); if(mr){ mr.style.display=wf?'':'none'; } const mw=$('#nMotherWrap'); if(mw){ mw.style.outline=wf?'2px solid var(--am-400)':''; mw.style.borderRadius='8px'; }
+}
+/* رفع ملفات من الجهاز (ضغط الصور وحفظها داخل الطلب) */
+function renderAttChips(){ const c=$('#attChips'); if(!c)return; const a=window.__att||[]; c.innerHTML=a.map((f,i)=>`<span class="chip st-done" style="padding:5px 9px">${esc(f.name.slice(0,22))} <button type="button" class="x" style="padding:0 2px" onclick="window.__att.splice(${i},1);renderAttChips()">${icon('x')}</button></span>`).join(''); }
+function addAttachments(files){
+  window.__att=window.__att||[];
+  [...files].slice(0,8).forEach(file=>{
+    if(file.type.startsWith('image/')){
+      const img=new Image(); const rd=new FileReader();
+      rd.onload=()=>{ img.onload=()=>{ const sc=Math.min(1,1280/Math.max(img.width,img.height)); const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); const url=cv.toDataURL('image/jpeg',0.72); window.__att.push({name:file.name,type:'image/jpeg',dataUrl:url}); renderAttChips(); }; img.src=rd.result; };
+      rd.readAsDataURL(file);
+    } else {
+      if(file.size>3*1024*1024){ toast('ملف PDF كبير (أكثر من 3MB): '+file.name,false); return; }
+      const rd=new FileReader(); rd.onload=()=>{ window.__att.push({name:file.name,type:file.type||'application/pdf',dataUrl:rd.result}); renderAttChips(); }; rd.readAsDataURL(file);
+    }
+  });
+}
 function createRequest(pub){
   const name=$('#nName').value.trim(), phone=$('#nPhone').value.trim(), desc=$('#nDesc').value.trim();
+  const type=$('#nType').value, mother=$('#nMother').value.trim(), welfare=isWelfare(type);
   if(!name||!phone||!desc){ toast('يرجى إكمال الاسم الرباعي والهاتف ونص الطلب', false); return; }
   if(name.split(/\s+/).filter(Boolean).length<3){ toast('يرجى إدخال الاسم الرباعي واللقب', false); return; }
   const docs=readDocRows('newDocRows');
-  const drive=$('#nDrive').value.trim(); if(drive) docs.unshift({id:'drv',name:'مستمسكات (Google Drive)',value:drive,status:'submitted',required:true});
+  const att=(window.__att||[]);
+  if(welfare){
+    if(!mother || mother.split(/\s+/).filter(Boolean).length<2){ toast('طلبات الرعاية الاجتماعية: اسم الأم الثلاثي إلزامي', false); return; }
+    if(!docs.length && !att.length){ toast('طلبات الرعاية الاجتماعية: إرفاق المستمسكات إلزامي', false); return; }
+  }
   const t=Store.newTracking(); const code='CIT'+t.split('-')[2].slice(-4);
   const sub=$('#nSubReq'); const subVal=($('#subReqWrap').style.display!=='none'&&sub)?sub.value:'';
-  const req={ id:'req-'+t, trackingId:t, citizenName:name, phone, governorate:$('#nGov').value.trim(), district:$('#nDist').value.trim(),
-    requestType:$('#nType').value, subRequest:subVal, targetEntity:normalizeEntity($('#nEntity').value.trim()),
-    title:(desc.slice(0,45)||$('#nType').value), description:desc, scope:$('#nScope').value, documentState:$('#nDocState').value,
-    driveLink:drive, documents:docs, channel: pub?'الرابط العام':'استقبال مباشر',
+  const req={ id:'req-'+t, trackingId:t, citizenName:name, motherName:mother, phone, governorate:$('#nGov').value.trim(), district:$('#nDist').value.trim(),
+    requestType:type, subRequest:subVal, targetEntity:normalizeEntity($('#nEntity').value.trim()),
+    title:(desc.slice(0,45)||type), description:desc, scope:$('#nScope').value, documentState:$('#nDocState').value,
+    attachments:att, documents:docs, channel: pub?'الرابط العام':'استقبال مباشر',
     receptionEmployee: pub?'':($('#nEmp')?$('#nEmp').value.trim():''), office: pub?'':($('#nOffice')?$('#nOffice').value.trim():''),
     status:'جديد', urgency: pub?'':($('#nUrg')?$('#nUrg').value:'اعتيادي'), registryIn: pub?'':($('#nRegIn')?$('#nRegIn').value.trim():''), registryOut:'',
     submittedAt:nowStr(), updatedAt:nowStr(),
     timeline:[{id:'t1',timestamp:nowStr(),title:'استلام الطلب وتسجيله',description:'عبر '+(pub?'الرابط العام':'الاستقبال')+(subVal?' — '+subVal:''),actor:state.settings.officeName||APP.office,status:'current'}],
     staffNotes:'', accessAccount:{username:t,accessCode:code,generatedAt:nowStr()} };
-  Store.upsert(req); closeModal(); if(!pub) render();
+  Store.upsert(req); window.__att=[]; closeModal(); if(!pub) render();
   const msg=`عزيزي المواطن ${name}\nتم استلام وتسجيل طلبكم لدى ${state.settings.officeName||APP.office}.\nرمز المتابعة: ${t}\nكلمة المرور: ${code}\nيمكنكم متابعة حالة طلبكم عبر المنظومة.`;
   openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b em">${icon('check2')} تم تسجيل الطلب</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b center">
@@ -1149,7 +1189,14 @@ function createRequest(pub){
       </div>
     </div>`,'460px');
 }
-function officeList(){ const s=new Set(); state.requests.forEach(r=>{ if(r.office) s.add(r.office); }); return [...s]; }
+function officeList(){ const s=new Set(); state.requests.forEach(r=>{ if(r.office) s.add(r.office); }); state.settings.branches.forEach(b=>s.add(b.code?b.code+' '+b.name:b.name)); return [...s]; }
+function detailAddFiles(id,files){ const r=state.requests.find(x=>x.id===id); if(!r)return; r.attachments=r.attachments||[]; const before=r.attachments.length;
+  [...files].slice(0,8).forEach(file=>{
+    if(file.type.startsWith('image/')){ const img=new Image(),rd=new FileReader(); rd.onload=()=>{ img.onload=()=>{ const sc=Math.min(1,1280/Math.max(img.width,img.height)); const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); r.attachments.push({name:file.name,type:'image/jpeg',dataUrl:cv.toDataURL('image/jpeg',0.72)}); Store.upsert(r); openDetail(id); }; img.src=rd.result; }; rd.readAsDataURL(file); }
+    else { if(file.size>3*1024*1024){ toast('ملف كبير: '+file.name,false); return;} const rd=new FileReader(); rd.onload=()=>{ r.attachments.push({name:file.name,type:file.type||'application/pdf',dataUrl:rd.result}); Store.upsert(r); openDetail(id); }; rd.readAsDataURL(file); }
+  });
+  if(files.length) toast('جارِ رفع الملفات...');
+}
 
 /* واتساب */
 function waTemplates(r,kind){
@@ -1283,8 +1330,16 @@ function openSettings(){
   const s=state.settings;
   openModal(`<div class="modal-h" style="justify-content:space-between"><div class="b">${icon('cog')} الإعدادات والذكاء الاصطناعي</div><button class="x" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-b">
-      <div class="field"><label>اسم الجهة</label><input value="${esc(s.officeName||APP.office)}" disabled title="يُضبط من رابط الترخيص فقط"><div class="txt-xs muted2 mt1">اسم الجهة يُحدَّد من رابط الترخيص عند التفعيل ولا يمكن تغييره هنا.</div></div>
-      <div class="field"><label>كلمة مرور دخول الموظف</label><input id="setPass" type="text" value="${esc(s.staffPass||'123456')}"></div>
+      <div class="b txt-sm mb2 em">${icon('building')} الهوية والعرض</div>
+      <div class="flex gap3 items-center mb3">
+        <div id="logoPreview">${brandMark(60)}</div>
+        <div class="grow"><input type="file" id="setLogo" accept="image/*" style="display:none" onchange="pickLogo(this.files[0])"><button type="button" class="btn btn-white btn-sm" onclick="document.getElementById('setLogo').click()">${icon('cam')} تغيير شعار/صورة النائب</button>${s.logo?`<button type="button" class="btn btn-gray btn-sm mt1" onclick="state.settings.logo='';saveSettings();document.getElementById('logoPreview').innerHTML=brandMark(60);toast('أُزيل الشعار')">إزالة الصورة</button>`:''}</div>
+      </div>
+      <div class="field"><label>اسم التطبيق (العرض)</label><input id="setAppName" value="${esc(s.appName||'')}" placeholder="${esc(s.officeName||APP.office)}"></div>
+      <div class="field"><label>اسم المدير / النائب</label><input id="setDirector" value="${esc(s.directorName||'')}" placeholder="مثال: النائب عدي العوادي"></div>
+      <div class="txt-xs muted2 mb3">اسم الجهة الأساسي يأتي من رابط الترخيص (${esc(s.officeName||APP.office)})؛ ما تُدخله هنا يُستخدم للعرض.</div>
+      <button class="btn btn-dark btn-sm" style="width:100%;justify-content:center" onclick="closeModal();openStaff()">${icon('user')} إعداد الموظفين والفروع والأدوار</button>
+      <div class="field mt3"><label>كلمة مرور المدير (احتياطية)</label><input id="setPass" type="text" value="${esc(s.staffPass||'123456')}"></div>
       <hr style="border:none;border-top:1px solid var(--sl-200);margin:14px 0">
       <div class="b txt-sm mb2 em">${icon('sparkle')} مزوّد الذكاء الاصطناعي</div>
       <div class="field"><label>المزوّد</label><select id="setProvider" onchange="document.getElementById('gemBox').classList.toggle('hidden',this.value!=='gemini');document.getElementById('clBox').classList.toggle('hidden',this.value!=='claude')">
@@ -1318,8 +1373,51 @@ async function testGemini(){
       <div class="muted mt1">النماذج المتاحة: ${models.slice(0,12).map(m=>'<span class="mono">'+esc(m)+'</span>').join('، ')}</div>`;
   }catch(e){ box.innerHTML=`<span class="chip urg-high" style="padding:4px 8px">${esc(e.message)}</span>`; }
 }
+/* ============ الموظفون والفروع والأدوار والصلاحيات ============ */
+const ROLES=['رئيس المكتب','مدير الفرع','موظف الاستعلام','موظف إدخال','مخصص'];
+const PERM_LABELS={view:'عرض الطلبات',create:'إضافة طلب',edit:'تعديل/تحديث',letters:'إصدار كتب',export:'تصدير إكسل',manageStaff:'إدارة الموظفين',allBranches:'كل الفروع',globalNotes:'رؤية كل الملاحظات'};
+function roleDefaults(role){
+  const all={view:1,create:1,edit:1,letters:1,export:1,manageStaff:1,allBranches:1,globalNotes:1};
+  if(role==='رئيس المكتب')return all;
+  if(role==='مدير الفرع')return {view:1,create:1,edit:1,letters:1,export:1,manageStaff:0,allBranches:0,globalNotes:1};
+  if(role==='موظف الاستعلام')return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
+  if(role==='موظف إدخال')return {view:1,create:1,edit:1,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
+  return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
+}
+function can(p){ const se=state.session; if(!se)return false; if(se.master)return true; return !!(se.perms&&se.perms[p]); }
+function branchName(b){ return (b.code?b.code+' ':'')+b.name; }
+function openStaff(){
+  if(state.session && !can('manageStaff')){ toast('لا تملك صلاحية إدارة الموظفين', false); return; }
+  const s=state.settings; const br=s.branches, em=s.employees;
+  openModal(`<div class="modal-h" style="background:var(--sl-900);color:#fff;justify-content:space-between"><div class="b" style="color:var(--am-300)">${icon('user')} إعداد الفروع والموظفين</div><button class="x" style="color:#94a3b8" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <div class="b txt-sm mb2 em">${icon('building')} الفروع (يمكن أكثر من فرع لنفس المحافظة)</div>
+      <div class="flex col gap2 mb2">${br.map((b,i)=>`<div class="req-row flex items-center justify-between gap2" style="padding:8px 12px"><div><b class="txt-sm">${esc(branchName(b))}</b> <span class="txt-xs muted">— ${esc(b.gov)}</span></div><button class="x" onclick="delBranch(${i})">${icon('x')}</button></div>`).join('')||'<span class="muted txt-sm">لا توجد فروع</span>'}</div>
+      <div class="grid g3 gap2"><input id="brName" placeholder="اسم الفرع (مثال: مكتب ساحة سعد)"><input id="brGov" list="govList2" placeholder="المحافظة" value="البصرة"><input id="brCode" placeholder="الرمز OFF-.." class="mono"></div>
+      <datalist id="govList2">${GOVS.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+      <button class="btn btn-em btn-sm mt2" onclick="addBranch()">${icon('plus')} إضافة فرع</button>
+      <hr style="border:none;border-top:1px solid var(--sl-200);margin:16px 0">
+      <div class="b txt-sm mb2 em">${icon('user')} الموظفون والأدوار</div>
+      <div class="flex col gap2 mb2">${em.map((e,i)=>`<div class="req-row" style="padding:8px 12px"><div class="flex items-center justify-between gap2"><div><b class="txt-sm">${esc(e.name)}</b> <span class="chip st-recv txt-xs">${esc(e.role)}</span> ${e.branchName?`<span class="txt-xs muted">${esc(e.branchName)}</span>`:''}</div><div class="flex gap1"><span class="txt-xs muted mono">${esc(e.pass||'')}</span><button class="x" onclick="delEmployee(${i})">${icon('x')}</button></div></div><div class="txt-xs muted2 mt1">${Object.keys(PERM_LABELS).filter(k=>e.perms&&e.perms[k]).map(k=>PERM_LABELS[k]).join(' · ')}</div></div>`).join('')||'<span class="muted txt-sm">لا يوجد موظفون — يدخل المدير بكلمة المرور الاحتياطية</span>'}</div>
+      <div class="card pad3" style="background:var(--sl-50)">
+        <div class="grid g2 gap2"><input id="emName" placeholder="اسم الموظف"><input id="emPhone" class="mono" placeholder="هاتف الموظف (للإشعارات)"></div>
+        <div class="grid g3 gap2 mt2"><select id="emRole" onchange="emPermUi()">${ROLES.map(r=>`<option>${r}</option>`).join('')}</select><select id="emBranch"><option value="">— كل الفروع —</option>${br.map(b=>`<option>${esc(branchName(b))}</option>`).join('')}</select><input id="emPass" class="mono" placeholder="رمز الدخول"></div>
+        <div id="emPerms" class="flex gap2 wrap mt2"></div>
+        <button class="btn btn-em btn-sm mt2" onclick="addEmployee()">${icon('plus')} إضافة موظف</button>
+      </div>
+    </div>`,'620px');
+  emPermUi();
+}
+function emPermUi(){ const role=$('#emRole').value; const d=roleDefaults(role); const c=$('#emPerms'); if(!c)return; c.innerHTML=Object.keys(PERM_LABELS).map(k=>`<label class="chip" style="background:var(--sl-100);padding:5px 9px;cursor:pointer"><input type="checkbox" class="emPerm" data-k="${k}" ${d[k]?'checked':''} style="width:auto;margin-left:4px">${PERM_LABELS[k]}</label>`).join(''); }
+function addBranch(){ const n=$('#brName').value.trim(); if(!n){toast('اسم الفرع مطلوب',false);return;} state.settings.branches.push({id:'b'+Date.now(),name:n,gov:$('#brGov').value.trim(),code:$('#brCode').value.trim()}); saveSettings(); openStaff(); toast('تمت إضافة الفرع'); }
+function delBranch(i){ state.settings.branches.splice(i,1); saveSettings(); openStaff(); }
+function addEmployee(){ const n=$('#emName').value.trim(); if(!n){toast('اسم الموظف مطلوب',false);return;} const perms={}; document.querySelectorAll('.emPerm').forEach(c=>perms[c.dataset.k]=c.checked?1:0);
+  state.settings.employees.push({id:'e'+Date.now(),name:n,role:$('#emRole').value,branchName:$('#emBranch').value,phone:$('#emPhone').value.trim(),pass:$('#emPass').value.trim()||'0000',perms}); saveSettings(); openStaff(); toast('تمت إضافة الموظف'); }
+function delEmployee(i){ state.settings.employees.splice(i,1); saveSettings(); openStaff(); }
+function pickLogo(file){ if(!file)return; const img=new Image(),rd=new FileReader(); rd.onload=()=>{ img.onload=()=>{ const sc=Math.min(1,256/Math.max(img.width,img.height)); const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc; cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); state.settings.logo=cv.toDataURL('image/jpeg',0.8); saveSettings(); const p=$('#logoPreview'); if(p)p.innerHTML=brandMark(60); toast('تم تعيين الصورة'); }; img.src=rd.result; }; rd.readAsDataURL(file); }
 function saveSettingsUI(){
   const s=state.settings;
+  s.appName=$('#setAppName').value.trim(); s.directorName=$('#setDirector').value.trim();
   s.staffPass=$('#setPass').value||'123456';
   s.aiProvider=$('#setProvider').value;
   s.geminiKey=$('#setGemKey').value.trim(); s.geminiModel=$('#setGemModel').value.trim()||'gemini-flash-latest';
