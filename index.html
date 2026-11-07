@@ -176,6 +176,8 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
 <g id="i-ext"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></g>
 <g id="i-copy"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>
 <g id="i-send"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></g>
+<g id="i-clock"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g>
+<g id="i-share"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></g>
 <g id="i-chat"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></g>
 <g id="i-lock"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
 <g id="i-clip"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><path d="M9 4h6"/></g>
@@ -194,7 +196,7 @@ footer{background:#fff;border-top:1px solid var(--sl-200);padding:16px;margin-to
    تطبيق ويب مستقل يعمل على أي جهاز · تأليف وإعداد: أ.م. أحمد الربيعي للحلول الهندسية
    ========================================================================= */
 const APP = {
-  version: '3.5.0',
+  version: '3.6.0',
   name: 'منظومة إدارة المعاملات والطلبات',
   masterWhatsApp: '9647844195061',     // رقم المدير لطلب التفعيل (يُصدر الترخيص من لوحة التحكم الموحّدة)
   office: 'الجهة',                      // اسم الجهة الافتراضي (يُضبط من رابط الترخيص أول مرة فقط)
@@ -252,9 +254,17 @@ const state = {
   filters: { q:'', gov:'الكل', type:'الكل', office:'الكل', urgency:'الكل', status:'الكل' },
   viewMode: 'list', groupBy: 'requestType',
   online: navigator.onLine,
-  public: false,
+  public: false, staffEntry: false,
+  tasks: [],
   ai: { open:false, busy:false, messages:[] }
 };
+const Tasks = {
+  load(){ try{ const d=JSON.parse(localStorage.getItem('naib_tasks')); if(Array.isArray(d)) state.tasks=d; }catch(e){} },
+  persist(){ try{ localStorage.setItem('naib_tasks', JSON.stringify(state.tasks)); }catch(e){} },
+  upsert(t){ const i=state.tasks.findIndex(x=>x.id===t.id); if(i>=0)state.tasks[i]=t; else state.tasks.unshift(t); this.persist(); if(state.settings.gasUrl&&state.online) GAS.pushTasks(); },
+  remove(id){ state.tasks=state.tasks.filter(x=>x.id!==id); this.persist(); if(state.settings.gasUrl&&state.online) GAS.pushTasks(); }
+};
+function applyTasks(arr){ if(Array.isArray(arr)){ state.tasks=arr; Tasks.persist(); } }
 // قالب رسالة واتساب التأكيدية (قابل للتعديل) — الحقول: {الجهة} {المدير} {الاسم} {الرقم} {التاريخ} {الكود} {الهاتف} {النوع}
 const DEFAULT_WA_TEMPLATE = `{الجهة}{المدير}
 السلام عليكم ورحمة الله وبركاته
@@ -393,7 +403,7 @@ const Store = {
   sortRecent(){ state.requests.sort((a,b)=> String(b.submittedAt||'').localeCompare(String(a.submittedAt||''))); },
   persist(){ try{ localStorage.setItem('naib_requests', JSON.stringify(state.requests)); }catch(e){ if(typeof toast==='function') toast('مساحة التخزين ممتلئة — صدّر نسخة احتياطية', false); } },
   byTracking(t){ t=String(t||'').trim().toLowerCase(); return state.requests.find(r=> r.trackingId.toLowerCase()===t || r.phone===t || (r.accessAccount&&r.accessAccount.accessCode&&r.accessAccount.accessCode.toLowerCase()===t)); },
-  upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(!state.public && state.settings.gasUrl) GAS.push(); },
+  upsert(req){ const i=state.requests.findIndex(r=>r.id===req.id||r.trackingId===req.trackingId); if(i>=0)state.requests[i]=req; else state.requests.unshift(req); this.persist(); if(!state.public && state.settings.gasUrl && state.online) GAS.saveOne(req); },
   stats(){ const s={total:state.requests.length,neww:0,waitingDocs:0,letters:0,done:0,sorted:0}; state.requests.forEach(r=>{ if(r.status==='جديد')s.neww++; if(r.status==='يحتاج استكمالاً'||r.status==='بانتظار مستند أو توضيح')s.waitingDocs++; if(r.status==='كتاب ينتظر التوقيع'||r.status==='أُحيل بكتاب رسمي')s.letters++; if(r.status==='منجز')s.done++; if(r.status==='مفرز — ضمن كتاب/ملف موحّد')s.sorted++; }); return s; },
   newTracking(){ let n=0; state.requests.forEach(r=>{ const m=/CIT-2026-(\d+)/.exec(r.trackingId||''); if(m) n=Math.max(n, parseInt(m[1],10)); }); return 'CIT-2026-'+String(n+1).padStart(6,'0'); },
   importRestore(obj, mode){ // mode: 'replace' | 'merge'
@@ -449,6 +459,14 @@ const GAS = {
   async pullStaff(){
     if(!state.settings.gasUrl||!state.online) return {ok:false};
     try{ const res=await fetch(state.settings.gasUrl+'?action=GET_STAFF',{method:'GET'}); const d=await res.json(); if(d&&d.staff){ applyStaff(typeof d.staff==='string'?JSON.parse(d.staff):d.staff); } return {ok:true}; }catch(e){ return {ok:false, error:e.message}; }
+  },
+  async pushTasks(){
+    if(!state.settings.gasUrl||!state.online) return {ok:false};
+    try{ const res=await fetch(state.settings.gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'SAVE_TASKS', tasks: JSON.stringify(state.tasks)})}); await res.json().catch(()=>({})); return {ok:true}; }catch(e){ return {ok:false, error:e.message}; }
+  },
+  async pullTasks(){
+    if(!state.settings.gasUrl||!state.online) return {ok:false};
+    try{ const res=await fetch(state.settings.gasUrl+'?action=GET_TASKS',{method:'GET'}); const d=await res.json(); if(d&&d.tasks){ applyTasks(typeof d.tasks==='string'?JSON.parse(d.tasks):d.tasks); } return {ok:true}; }catch(e){ return {ok:false, error:e.message}; }
   }
 };
 
@@ -598,7 +616,7 @@ const SEED = [{"id": "req-CIT-2026-000001", "trackingId": "CIT-2026-000001", "ci
 </script>
 <script>
 const SEAL_IMG = "data:image/jpeg;base64,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";
-const GAS_CODE = "/**\n * Code.gs \u2014 \u062e\u0644\u0641\u064a\u0629 \u0643\u0648\u0643\u0644 \u0633\u0643\u0631\u0628\u062a \u0644\u0645\u0646\u0638\u0648\u0645\u0629 \u0627\u0644\u0646\u0627\u0626\u0628 \u00b7 \u0645\u0643\u062a\u0628 \u0634\u0624\u0648\u0646 \u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646\n * \u0645\u062c\u0644\u0633 \u0627\u0644\u0646\u0648\u0627\u0628 \u0627\u0644\u0639\u0631\u0627\u0642\u064a \u2014 \u0625\u0639\u062f\u0627\u062f: \u0623.\u0645. \u0623\u062d\u0645\u062f \u0627\u0644\u0631\u0628\u064a\u0639\u064a \u0644\u0644\u062d\u0644\u0648\u0644 \u0627\u0644\u0647\u0646\u062f\u0633\u064a\u0629\n *\n * \u0627\u0644\u0648\u0638\u064a\u0641\u0629: \u062a\u062e\u0632\u064a\u0646 \u0648\u0645\u0632\u0627\u0645\u0646\u0629 \u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646 \u0641\u064a Google Sheets (\u064a\u0639\u0645\u0644 \u0643\u0642\u0627\u0639\u062f\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0633\u062d\u0627\u0628\u064a\u0629).\n * - doPost  : \u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u0646 \u0627\u0644\u062a\u0637\u0628\u064a\u0642 (SYNC_ALL / SAVE_REQUEST).\n * - doGet   : \u0625\u0631\u062c\u0627\u0639 \u0643\u0644 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0644\u0644\u062a\u0637\u0628\u064a\u0642 (FETCH_ALL).\n * - \u064a\u062e\u0632\u0651\u0646 \u0627\u0644\u0623\u0639\u0645\u062f\u0629 \u0627\u0644\u0645\u0642\u0631\u0648\u0621\u0629 + \u0639\u0645\u0648\u062f JSON \u0643\u0627\u0645\u0644 (col 17) \u0644\u0644\u062d\u0641\u0627\u0638 \u0639\u0644\u0649 \u0643\u0644 \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644.\n * - \u0648\u0631\u0642\u0629 \"\u0627\u0644\u062a\u0631\u0627\u062e\u064a\u0635\" \u0644\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0623\u062c\u0647\u0632\u0629 \u0627\u0644\u0645\u0641\u0639\u0651\u0644\u0629 (\u062a\u062d\u0643\u0651\u0645 \u0645\u0631\u0643\u0632\u064a \u0627\u062e\u062a\u064a\u0627\u0631\u064a).\n *\n * \u062e\u0637\u0648\u0627\u062a \u0627\u0644\u0646\u0634\u0631:\n * 1) sheets.google.com \u2190 \u062c\u062f\u0648\u0644 \u062c\u062f\u064a\u062f.\n * 2) \u0627\u0644\u0625\u0636\u0627\u0641\u0627\u062a (Extensions) \u2190 Apps Script\u060c \u0627\u0644\u0635\u0642 \u0647\u0630\u0627 \u0627\u0644\u0643\u0648\u062f\u060c \u0627\u062d\u0641\u0638.\n * 3) Deploy \u2190 New deployment \u2190 Web app \u2190 Who has access: Anyone.\n * 4) \u0627\u0646\u0633\u062e \u0631\u0627\u0628\u0637 (Web App URL) \u0648\u0636\u0639\u0647 \u0641\u064a \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0637\u0628\u064a\u0642.\n */\n\nvar SHEET_NAME = \"\u0637\u0644\u0628\u0627\u062a_\u0627\u0644\u0645\u0648\u0627\u0637\u0646\u064a\u0646\";\nvar LIC_SHEET  = \"\u0627\u0644\u062a\u0631\u0627\u062e\u064a\u0635\";\nvar META_SHEET = \"\u0627\u0644\u0647\u0648\u064a\u0629_\u0648\u0627\u0644\u062a\u0639\u0644\u064a\u0645\u0627\u062a\";   // \u0627\u0644\u0647\u0648\u064a\u0629 \u0648\u0627\u0644\u0634\u0639\u0627\u0631 \u0648\u0627\u0644\u063a\u0644\u0627\u0641 \u0648\u062a\u0639\u0644\u064a\u0645\u0627\u062a \u0627\u0644\u0645\u0648\u0627\u0637\u0646 (\u0645\u062e\u0632\u0651\u0646\u0629 \u0645\u062c\u0632\u0651\u0623\u0629)\nvar STAFF_SHEET = \"\u0627\u0644\u0645\u0648\u0638\u0641\u0648\u0646_\u0627\u0644\u0641\u0631\u0648\u0639\";     // \u062d\u0633\u0627\u0628\u0627\u062a \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646 \u0648\u0627\u0644\u0641\u0631\u0648\u0639 (\u0645\u062e\u0632\u0651\u0646\u0629 \u0645\u062c\u0632\u0651\u0623\u0629)\nvar META_CHUNK = 45000;\n\nfunction saveChunked_(name, str){\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(name) || ss.insertSheet(name);\n  sh.clearContents();\n  var parts = [];\n  for (var i=0; i<str.length; i+=META_CHUNK) parts.push([str.substring(i, i+META_CHUNK)]);\n  if (parts.length) sh.getRange(1,1,parts.length,1).setValues(parts);\n  return \"ok\";\n}\nfunction getChunked_(name){\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(name);\n  if (!sh || sh.getLastRow() < 1) return \"\";\n  var vals = sh.getRange(1,1,sh.getLastRow(),1).getValues();\n  return vals.map(function(r){ return r[0]; }).join(\"\");\n}\nfunction saveMeta_(s){ return saveChunked_(META_SHEET, s); }\nfunction getMeta_(){ return getChunked_(META_SHEET); }\nfunction saveStaff_(s){ return saveChunked_(STAFF_SHEET, s); }\nfunction getStaff_(){ return getChunked_(STAFF_SHEET); }\nvar HEADERS = [\n  \"\u0631\u0645\u0632 \u0627\u0644\u062a\u062a\u0628\u0639\",\"\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0627\u0637\u0646\",\"\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062a\u0641\",\"\u0627\u0644\u0645\u062d\u0627\u0641\u0638\u0629\",\"\u0627\u0644\u0642\u0636\u0627\u0621/\u0627\u0644\u0645\u062d\u0644\u0629\",\"\u0627\u0644\u0642\u0637\u0627\u0639\",\n  \"\u0627\u0644\u0648\u0632\u0627\u0631\u0629 \u0627\u0644\u0645\u0639\u0646\u064a\u0629\",\"\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0637\u0644\u0628\",\"\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629\",\"\u062f\u0631\u062c\u0629 \u0627\u0644\u0623\u0633\u0628\u0642\u064a\u0629\",\"\u0627\u0644\u0645\u0633\u062a\u0645\u0633\u0643\u0627\u062a \u0627\u0644\u0646\u0627\u0642\u0635\u0629\",\n  \"\u0631\u0642\u0645 \u0627\u0644\u0643\u062a\u0627\u0628 \u0627\u0644\u0646\u064a\u0627\u0628\u064a\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0643\u062a\u0627\u0628\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062a\u0642\u062f\u064a\u0645\",\"\u0622\u062e\u0631 \u062a\u062d\u062f\u064a\u062b\",\"\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0627\u0644\u0645\u0643\u062a\u0628\",\"JSON_DATA\"\n];\n\nfunction setupSheet() {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);\n  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);\n  sheet.getRange(1, 1, 1, HEADERS.length)\n    .setBackground(\"#064e3b\").setFontColor(\"#ffffff\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  sheet.setFrozenRows(1);\n  // \u0625\u062e\u0641\u0627\u0621 \u0639\u0645\u0648\u062f JSON\n  sheet.hideColumns(17);\n\n  var lic = ss.getSheetByName(LIC_SHEET);\n  if (!lic) {\n    lic = ss.insertSheet(LIC_SHEET);\n    lic.getRange(1,1,1,5).setValues([[\"\u0631\u0645\u0632 \u0627\u0644\u062c\u0647\u0627\u0632\",\"\u0627\u0633\u0645 \u0627\u0644\u0645\u0643\u062a\u0628/\u0627\u0644\u0645\u0648\u0638\u0641\",\"\u0627\u0644\u062f\u0648\u0631\",\"\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u062a\u0641\u0639\u064a\u0644\",\"\u0627\u0644\u062d\u0627\u0644\u0629\"]]);\n    lic.getRange(1,1,1,5).setBackground(\"#0f172a\").setFontColor(\"#fcd34d\").setFontWeight(\"bold\");\n    lic.setFrozenRows(1);\n  }\n  return \"\u062a\u0645 \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u062c\u062f\u0627\u0648\u0644 \u0628\u0646\u062c\u0627\u062d\";\n}\n\nfunction rowFromRequest(r) {\n  var missing = (r.aiAnalysis && r.aiAnalysis.missingDocsSummary) ? r.aiAnalysis.missingDocsSummary.join(\"\u060c \") : \"\";\n  return [\n    r.trackingId||\"\", r.citizenName||\"\", r.phone||\"\", r.governorate||\"\", r.district||\"\", r.category||\"\",\n    r.targetMinistry||\"\", r.title||\"\", r.status||\"\", r.urgency||\"\", missing,\n    r.officialLetterNumber||\"\", r.officialLetterDate||\"\", r.submittedAt||\"\", r.updatedAt||\"\", r.staffNotes||\"\",\n    JSON.stringify(r)\n  ];\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(20000);\n    var data = JSON.parse(e.postData.contents);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var sheet = ss.getSheetByName(SHEET_NAME);\n    if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n    if (data.action === \"SYNC_ALL\" && Array.isArray(data.requests)) {\n      var last = sheet.getLastRow();\n      if (last > 1) sheet.getRange(2, 1, last - 1, HEADERS.length).clearContent();\n      var rows = data.requests.map(rowFromRequest);\n      if (rows.length) sheet.getRange(2, 1, rows.length, HEADERS.length).setValues(rows);\n      return out({ status:\"success\", message:\"\u062a\u0645\u062a \u0645\u0632\u0627\u0645\u0646\u0629 \"+rows.length+\" \u0645\u0639\u0627\u0645\u0644\u0629\", syncedCount: rows.length });\n    }\n\n    if (data.action === \"SAVE_REQUEST\" && data.request) {\n      var r = data.request, foundRow = -1, last = sheet.getLastRow();\n      if (last > 1) {\n        var ids = sheet.getRange(2, 1, last - 1, 1).getValues();\n        for (var i = 0; i < ids.length; i++) if (ids[i][0] === r.trackingId) { foundRow = i + 2; break; }\n      }\n      var row = rowFromRequest(r);\n      if (foundRow > 0) sheet.getRange(foundRow, 1, 1, HEADERS.length).setValues([row]);\n      else sheet.appendRow(row);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062d\u0641\u0638 \u0627\u0644\u0637\u0644\u0628\", trackingId: r.trackingId });\n    }\n\n    if (data.action === \"REGISTER_LICENSE\" && data.device) {\n      var lic = ss.getSheetByName(LIC_SHEET) || (setupSheet(), ss.getSheetByName(LIC_SHEET));\n      lic.appendRow([data.device, data.office||\"\", data.role||\"\", new Date().toISOString(), \"\u0645\u0641\u0639\u0651\u0644\"]);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062c\u0647\u0627\u0632\" });\n    }\n\n    if (data.action === \"SAVE_META\" && typeof data.meta === \"string\") {\n      saveMeta_(data.meta);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629 \u0648\u0627\u0644\u062a\u0639\u0644\u064a\u0645\u0627\u062a\" });\n    }\n\n    if (data.action === \"SAVE_STAFF\" && typeof data.staff === \"string\") {\n      saveStaff_(data.staff);\n      return out({ status:\"success\", message:\"\u062a\u0645 \u062d\u0641\u0638 \u062d\u0633\u0627\u0628\u0627\u062a \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646\" });\n    }\n\n    return out({ status:\"error\", message:\"\u0625\u062c\u0631\u0627\u0621 \u063a\u064a\u0631 \u0645\u0639\u0631\u0648\u0641\" });\n  } catch (err) {\n    return out({ status:\"error\", message: String(err) });\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction doGet(e) {\n  var action = (e && e.parameter && e.parameter.action) || \"FETCH_ALL\";\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n  if (action === \"CHECK_LICENSE\") {\n    var dc = e.parameter.device || \"\";\n    var lic = ss.getSheetByName(LIC_SHEET);\n    var status = \"unknown\";\n    if (lic && lic.getLastRow() > 1) {\n      var vals = lic.getRange(2,1,lic.getLastRow()-1,5).getValues();\n      for (var i=0;i<vals.length;i++) if (vals[i][0]===dc) status = String(vals[i][4]||\"\u0645\u0641\u0639\u0651\u0644\");\n    }\n    return out({ status:\"success\", device:dc, licenseStatus:status });\n  }\n\n  if (action === \"GET_META\") {\n    return out({ status:\"success\", meta: getMeta_() });\n  }\n\n  if (action === \"GET_STAFF\") {\n    return out({ status:\"success\", staff: getStaff_() });\n  }\n\n  var last = sheet.getLastRow();\n  if (last <= 1) return out({ requests: [], meta: getMeta_() });\n  var data = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();\n  var requests = data.map(function(row) {\n    var json = row[16];\n    if (json) { try { return { payload: json }; } catch(x){} }\n    return {\n      trackingId: row[0], citizenName: row[1], phone: row[2], governorate: row[3], district: row[4],\n      category: row[5], targetMinistry: row[6], title: row[7], status: row[8], urgency: row[9],\n      missingDocs: row[10], officialLetterNumber: row[11], officialLetterDate: row[12],\n      submittedAt: row[13], updatedAt: row[14], staffNotes: row[15]\n    };\n  });\n  return out({ requests: requests, meta: getMeta_() });\n}\n\nfunction out(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n";
+const GAS_CODE = "/**\n * Code.gs — خلفية كوكل سكربت لمنظومة إدارة المعاملات والطلبات\n * إعداد: أ.م. أحمد الربيعي للحلول الهندسية\n *\n * الوظيفة: تخزين ومزامنة طلبات المواطنين في Google Sheets (يعمل كقاعدة بيانات سحابية).\n * - doPost  : استقبال البيانات من التطبيق (SYNC_ALL / SAVE_REQUEST).\n * - doGet   : إرجاع كل الطلبات للتطبيق (FETCH_ALL).\n * - يخزّن الأعمدة المقروءة + عمود JSON كامل (col 17) للحفاظ على كل التفاصيل.\n * - ورقة \"التراخيص\" لتسجيل الأجهزة المفعّلة (تحكّم مركزي اختياري).\n *\n * خطوات النشر:\n * 1) sheets.google.com ← جدول جديد.\n * 2) الإضافات (Extensions) ← Apps Script، الصق هذا الكود، احفظ.\n * 3) Deploy ← New deployment ← Web app ← Who has access: Anyone.\n * 4) انسخ رابط (Web App URL) وضعه في إعدادات التطبيق.\n */\n\nvar SHEET_NAME = \"طلبات_المواطنين\";\nvar LIC_SHEET  = \"التراخيص\";\nvar META_SHEET = \"الهوية_والتعليمات\";   // الهوية والشعار والغلاف وتعليمات المواطن (مخزّنة مجزّأة)\nvar STAFF_SHEET = \"الموظفون_الفروع\";     // حسابات الموظفين والفروع (مخزّنة مجزّأة)\nvar TASKS_SHEET = \"المهام\";              // مهام الموظفين (مخزّنة مجزّأة)\nvar META_CHUNK = 45000;\n\nfunction saveChunked_(name, str){\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(name) || ss.insertSheet(name);\n  sh.clearContents();\n  var parts = [];\n  for (var i=0; i<str.length; i+=META_CHUNK) parts.push([str.substring(i, i+META_CHUNK)]);\n  if (parts.length) sh.getRange(1,1,parts.length,1).setValues(parts);\n  return \"ok\";\n}\nfunction getChunked_(name){\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(name);\n  if (!sh || sh.getLastRow() < 1) return \"\";\n  var vals = sh.getRange(1,1,sh.getLastRow(),1).getValues();\n  return vals.map(function(r){ return r[0]; }).join(\"\");\n}\nfunction saveMeta_(s){ return saveChunked_(META_SHEET, s); }\nfunction getMeta_(){ return getChunked_(META_SHEET); }\nfunction saveStaff_(s){ return saveChunked_(STAFF_SHEET, s); }\nfunction getStaff_(){ return getChunked_(STAFF_SHEET); }\nfunction saveTasks_(s){ return saveChunked_(TASKS_SHEET, s); }\nfunction getTasks_(){ return getChunked_(TASKS_SHEET); }\nvar HEADERS = [\n  \"رمز التتبع\",\"اسم المواطن\",\"رقم الهاتف\",\"المحافظة\",\"القضاء/المحلة\",\"القطاع\",\n  \"الوزارة المعنية\",\"عنوان الطلب\",\"الحالة الحالية\",\"درجة الأسبقية\",\"المستمسكات الناقصة\",\n  \"رقم الكتاب النيابي\",\"تاريخ الكتاب\",\"تاريخ التقديم\",\"آخر تحديث\",\"ملاحظات المكتب\",\"JSON_DATA\"\n];\n\nfunction setupSheet() {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);\n  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);\n  sheet.getRange(1, 1, 1, HEADERS.length)\n    .setBackground(\"#064e3b\").setFontColor(\"#ffffff\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  sheet.setFrozenRows(1);\n  // إخفاء عمود JSON\n  sheet.hideColumns(17);\n\n  var lic = ss.getSheetByName(LIC_SHEET);\n  if (!lic) {\n    lic = ss.insertSheet(LIC_SHEET);\n    lic.getRange(1,1,1,5).setValues([[\"رمز الجهاز\",\"اسم المكتب/الموظف\",\"الدور\",\"تاريخ التفعيل\",\"الحالة\"]]);\n    lic.getRange(1,1,1,5).setBackground(\"#0f172a\").setFontColor(\"#fcd34d\").setFontWeight(\"bold\");\n    lic.setFrozenRows(1);\n  }\n  return \"تم إعداد الجداول بنجاح\";\n}\n\nfunction rowFromRequest(r) {\n  var missing = (r.aiAnalysis && r.aiAnalysis.missingDocsSummary) ? r.aiAnalysis.missingDocsSummary.join(\"، \") : \"\";\n  return [\n    r.trackingId||\"\", r.citizenName||\"\", r.phone||\"\", r.governorate||\"\", r.district||\"\", r.category||\"\",\n    r.targetMinistry||\"\", r.title||\"\", r.status||\"\", r.urgency||\"\", missing,\n    r.officialLetterNumber||\"\", r.officialLetterDate||\"\", r.submittedAt||\"\", r.updatedAt||\"\", r.staffNotes||\"\",\n    JSON.stringify(r)\n  ];\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    lock.waitLock(20000);\n    var data = JSON.parse(e.postData.contents);\n    var ss = SpreadsheetApp.getActiveSpreadsheet();\n    var sheet = ss.getSheetByName(SHEET_NAME);\n    if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n    if (data.action === \"SYNC_ALL\" && Array.isArray(data.requests)) {\n      var last = sheet.getLastRow();\n      if (last > 1) sheet.getRange(2, 1, last - 1, HEADERS.length).clearContent();\n      var rows = data.requests.map(rowFromRequest);\n      if (rows.length) sheet.getRange(2, 1, rows.length, HEADERS.length).setValues(rows);\n      return out({ status:\"success\", message:\"تمت مزامنة \"+rows.length+\" معاملة\", syncedCount: rows.length });\n    }\n\n    if (data.action === \"SAVE_REQUEST\" && data.request) {\n      var r = data.request, foundRow = -1, last = sheet.getLastRow();\n      if (last > 1) {\n        var ids = sheet.getRange(2, 1, last - 1, 1).getValues();\n        for (var i = 0; i < ids.length; i++) if (ids[i][0] === r.trackingId) { foundRow = i + 2; break; }\n      }\n      var row = rowFromRequest(r);\n      if (foundRow > 0) sheet.getRange(foundRow, 1, 1, HEADERS.length).setValues([row]);\n      else sheet.appendRow(row);\n      return out({ status:\"success\", message:\"تم حفظ الطلب\", trackingId: r.trackingId });\n    }\n\n    if (data.action === \"REGISTER_LICENSE\" && data.device) {\n      var lic = ss.getSheetByName(LIC_SHEET) || (setupSheet(), ss.getSheetByName(LIC_SHEET));\n      lic.appendRow([data.device, data.office||\"\", data.role||\"\", new Date().toISOString(), \"مفعّل\"]);\n      return out({ status:\"success\", message:\"تم تسجيل الجهاز\" });\n    }\n\n    if (data.action === \"SAVE_META\" && typeof data.meta === \"string\") {\n      saveMeta_(data.meta);\n      return out({ status:\"success\", message:\"تم حفظ الهوية والتعليمات\" });\n    }\n\n    if (data.action === \"SAVE_STAFF\" && typeof data.staff === \"string\") {\n      saveStaff_(data.staff);\n      return out({ status:\"success\", message:\"تم حفظ حسابات الموظفين\" });\n    }\n\n    if (data.action === \"SAVE_TASKS\" && typeof data.tasks === \"string\") {\n      saveTasks_(data.tasks);\n      return out({ status:\"success\", message:\"تم حفظ المهام\" });\n    }\n\n    return out({ status:\"error\", message:\"إجراء غير معروف\" });\n  } catch (err) {\n    return out({ status:\"error\", message: String(err) });\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction doGet(e) {\n  var action = (e && e.parameter && e.parameter.action) || \"FETCH_ALL\";\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) { setupSheet(); sheet = ss.getSheetByName(SHEET_NAME); }\n\n  if (action === \"CHECK_LICENSE\") {\n    var dc = e.parameter.device || \"\";\n    var lic = ss.getSheetByName(LIC_SHEET);\n    var status = \"unknown\";\n    if (lic && lic.getLastRow() > 1) {\n      var vals = lic.getRange(2,1,lic.getLastRow()-1,5).getValues();\n      for (var i=0;i<vals.length;i++) if (vals[i][0]===dc) status = String(vals[i][4]||\"مفعّل\");\n    }\n    return out({ status:\"success\", device:dc, licenseStatus:status });\n  }\n\n  if (action === \"GET_META\") {\n    return out({ status:\"success\", meta: getMeta_() });\n  }\n\n  if (action === \"GET_STAFF\") {\n    return out({ status:\"success\", staff: getStaff_() });\n  }\n\n  if (action === \"GET_TASKS\") {\n    return out({ status:\"success\", tasks: getTasks_() });\n  }\n\n  var last = sheet.getLastRow();\n  if (last <= 1) return out({ requests: [], meta: getMeta_() });\n  var data = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();\n  var requests = data.map(function(row) {\n    var json = row[16];\n    if (json) { try { return { payload: json }; } catch(x){} }\n    return {\n      trackingId: row[0], citizenName: row[1], phone: row[2], governorate: row[3], district: row[4],\n      category: row[5], targetMinistry: row[6], title: row[7], status: row[8], urgency: row[9],\n      missingDocs: row[10], officialLetterNumber: row[11], officialLetterDate: row[12],\n      submittedAt: row[13], updatedAt: row[14], staffNotes: row[15]\n    };\n  });\n  return out({ requests: requests, meta: getMeta_() });\n}\n\nfunction out(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n";
 
 "use strict";
 /* ===========================================================================
@@ -685,6 +703,7 @@ function renderHeader(){
       ${office? `<nav class="flex items-center gap4 hide-sm txt-sm sb">
         <a class="navlink ${state.tab==='secretary-quick'?'active':''}" onclick="setTab('secretary-quick')">${icon('shield')} لوحة التحديث</a>
         <a class="navlink ${state.tab==='dashboard'?'active':''}" onclick="setTab('dashboard')">${icon('dash')} سجل الطلبات</a>
+        <a class="navlink ${state.tab==='tasks'?'active':''}" onclick="setTab('tasks')">${icon('clip')} المهام${(()=>{const n=myOpenTasks();return n?` <span class="cnt mono" style="background:var(--amber-500);color:#fff">${n}</span>`:'';})()}</a>
         <a class="navlink ${state.tab==='whatsapp-hub'?'active':''}" onclick="setTab('whatsapp-hub')">${icon('wa')} واتساب</a>
         <a class="navlink ${state.tab==='letters'?'active':''}" onclick="setTab('letters')">${icon('file')} الكتب الرسمية</a>
       </nav>`
@@ -942,6 +961,7 @@ function renderBody(){
     let inner='';
     if(state.tab==='secretary-quick') inner=renderSecretaryQuick();
     else if(state.tab==='dashboard') inner=renderDashboard();
+    else if(state.tab==='tasks') inner=renderTasks();
     else if(state.tab==='whatsapp-hub') inner=renderWhatsAppHub();
     else if(state.tab==='letters') inner=renderLetters();
     else inner=renderSecretaryQuick();
@@ -999,7 +1019,7 @@ async function openLogin(){
       <div class="field"><label>كلمة المرور</label><div class="input-ic">${icon('lock')}<input id="lgPass" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div></div>
       <div class="chip st-done" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px">${icon('check2')} البرنامج مُفعّل — يدخل كل موظف بحسابه فيصل لدوره ومكتبه</div>
       <button class="btn btn-dark" style="width:100%;justify-content:center;padding:11px" onclick="doLogin()">${icon('shield')} دخول</button>
-      <p class="txt-xs muted2 center mt3">${state.settings.employees.length?'ادخل باسم المستخدم وكلمة المرور الخاصة بك.':'أول دخول للمدير العام: المستخدم <b class="mono">admin</b> وكلمة المرور <b class="mono">123456</b>، ثم أنشئ الحسابات من الإعدادات.'}</p>
+      <p class="txt-xs muted2 center mt3">ادخل باسم المستخدم وكلمة المرور الخاصة بك.</p>
     </div>`,'430px');
 }
 async function doLogin(){
@@ -1008,7 +1028,7 @@ async function doLogin(){
   const ph=await hashPass(pass);
   // 1) حساب المدير العام (المبرمج/الإدارة)
   const adminUser=state.settings.adminUser||'admin';
-  const adminOk = user.toLowerCase()===adminUser.toLowerCase() && ( (state.settings.adminPassHash && ph===state.settings.adminPassHash) || (!state.settings.adminPassHash && pass===(state.settings.staffPass||'123456')) );
+  const adminOk = user.toLowerCase()===adminUser.toLowerCase() && ( (state.settings.adminPassHash && ph===state.settings.adminPassHash) || (!state.settings.adminPassHash && pass==='eng2020') );
   if(adminOk){
     state.session={ name:'المدير العام', user:adminUser, role:'رئيس المكتب', master:true, perms:roleDefaults('رئيس المكتب'), loginAt:nowStr() };
   } else {
@@ -1100,6 +1120,113 @@ function openPublicLink(){
       </div>
     </div>`,'440px');
 }
+function staffUrl(){ let u=location.origin+location.pathname+'#staff'; if(state.settings.gasUrl) u+='&db='+encodeURIComponent(state.settings.gasUrl); return u; }
+function openStaffLink(){
+  const u=staffUrl();
+  openModal(`<div class="modal-h" style="background:var(--sl-900);color:#fff;justify-content:space-between"><div class="b" style="color:var(--am-300)">${icon('share')} رابط دخول الموظفين</div><button class="x" style="color:#94a3b8" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b center">
+      <p class="txt-sm muted mb3">يفتح الموظف هذا الرابط على أي جهاز ويدخل باسم المستخدم وكلمة المرور الخاصة به — <b>بدون ترخيص</b>. يرى فرعه ومهامه والطلبات حسب صلاحياته.</p>
+      ${state.settings.gasUrl?`<div class="chip st-done" style="width:100%;justify-content:center;padding:7px;margin-bottom:10px">${icon('check2')} الرابط يحمل الخادم السحابي؛ تتزامن الحسابات والطلبات والمهام مباشرة</div>`:`<div class="chip urg-mid" style="width:100%;justify-content:center;padding:7px;margin-bottom:10px">${icon('alert')} اربط كوكل سكربت أولاً حتى يعمل دخول الموظفين على أجهزتهم</div>`}
+      <div class="card pad4 mb3" style="display:inline-block"><img src="${qrImg(u,220)}" alt="QR" width="200" height="200" style="display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div style="display:none" class="txt-xs muted">يتطلب اتصالاً لعرض الـ QR</div></div>
+      <div class="flex gap2"><input class="mono txt-xs" value="${esc(u)}" readonly><button class="btn btn-gray shrink0" onclick="navigator.clipboard.writeText('${esc(u)}');toast('نُسخ الرابط')">${icon('copy')}</button></div>
+      <div class="flex gap2 justify-center wrap mt3">
+        <a class="btn btn-wa" href="${waLink('', 'رابط دخول منظومة المكتب للموظفين: '+u)}" target="_blank">${icon('wa')} مشاركة عبر واتساب</a>
+        <a class="btn btn-white" href="${esc(u)}" target="_blank">${icon('ext')} فتح</a>
+      </div>
+    </div>`,'440px');
+}
+
+/* --------------------------------- المهام --------------------------------- */
+const TASK_STATES=['جديدة','قيد التنفيذ','منجزة'];
+function taskMine(t){ const se=state.session; if(!se)return false; if(t.toUser && t.toUser===se.user) return true; if(t.toRole && t.toRole===se.role) return true; if(t.toBranch && t.toBranch===(se.branchName||'')) return true; if(t.toAll) return true; return false; }
+function myOpenTasks(){ if(state.mode!=='office'||!state.session)return 0; return state.tasks.filter(t=>taskMine(t)&&t.status!=='منجزة').length; }
+function taskStatusChip(s){ const c=s==='منجزة'?'st-done':s==='قيد التنفيذ'?'st-recv':'st-new'; return `<span class="chip ${c} txt-xs">${esc(s)}</span>`; }
+function renderTasks(){
+  const se=state.session; const assigner=se&&(se.master||can('assignTasks'));
+  const mine=state.tasks.filter(t=>taskMine(t));
+  const sent=assigner?state.tasks.filter(t=>t.byUser===se.user||se.master):[];
+  return `<div class="wrapmax" style="padding:20px 16px">
+    <div class="flex items-center justify-between wrap gap2 mb4">
+      <div><div class="txt-xl b">${icon('clip')} المهام</div><div class="txt-sm muted">تُسنَد المهام من رئيس المكتب/مدير الفرع إلى الموظفين، ويتابع كل موظف مهامه ويحدّث حالتها.</div></div>
+      ${assigner?`<button class="btn btn-em" onclick="openNewTask()">${icon('plus')} إسناد مهمة جديدة</button>`:''}
+    </div>
+    <div class="card pad5 mb4">
+      <div class="b mb3 em">${icon('user')} مهامي (${mine.length})</div>
+      ${mine.length?`<div class="flex col gap2">${mine.sort((a,b)=>(a.status==='منجزة'?1:0)-(b.status==='منجزة'?1:0)).map(t=>taskRow(t,true)).join('')}</div>`:'<div class="muted txt-sm center" style="padding:14px">لا توجد مهام مُسنَدة إليك حالياً.</div>'}
+    </div>
+    ${assigner?`<div class="card pad5">
+      <div class="b mb3 em">${icon('send')} المهام التي أسندتها (${sent.length})</div>
+      ${sent.length?`<div class="flex col gap2">${sent.map(t=>taskRow(t,false)).join('')}</div>`:'<div class="muted txt-sm center" style="padding:14px">لم تُسند أي مهمة بعد.</div>'}
+    </div>`:''}
+  </div>`;
+}
+function taskTarget(t){ if(t.toUser){const e=(state.settings.employees||[]).find(x=>x.username===t.toUser);return '@'+t.toUser+(e?(' — '+e.name):'');} if(t.toRole)return 'كل: '+t.toRole; if(t.toBranch)return 'فرع: '+t.toBranch; if(t.toAll)return 'كل الموظفين'; return '—'; }
+function taskRow(t,mineView){
+  const urg=t.priority==='عاجل'?'urg-high':t.priority==='عالٍ'?'urg-mid':'';
+  const overdue=t.due && t.status!=='منجزة' && (new Date(t.due) < new Date(new Date().toDateString()));
+  return `<div class="req-row" style="padding:12px 14px;${overdue?'border-right:3px solid #dc2626':''}">
+    <div class="flex items-center justify-between wrap gap2">
+      <div class="grow"><b class="txt-sm">${esc(t.title)}</b> ${t.priority?`<span class="chip ${urg} txt-xs">${esc(t.priority)}</span>`:''} ${taskStatusChip(t.status)}</div>
+      <div class="flex gap1 items-center">
+        ${mineView?TASK_STATES.map(s=>`<button class="btn btn-sm ${t.status===s?'btn-em':'btn-gray'}" style="padding:3px 9px;font-size:11px" onclick="setTaskStatus('${t.id}','${s}')">${s}</button>`).join('')
+          :`<span class="txt-xs muted">${esc(taskTarget(t))}</span><button class="x" onclick="delTask('${t.id}')" title="حذف">${icon('x')}</button>`}
+      </div>
+    </div>
+    ${t.desc?`<div class="txt-sm muted mt2" style="white-space:pre-wrap;line-height:1.8">${esc(t.desc)}</div>`:''}
+    <div class="txt-xs muted2 mt2 flex gap3 wrap">
+      ${!mineView?'':`<span>${icon('user')} أسندها: ${esc(t.byName||'الإدارة')}</span>`}
+      ${t.due?`<span style="${overdue?'color:#dc2626;font-weight:600':''}">${icon('clock')} الاستحقاق: ${esc(t.due)}${overdue?' (متأخرة)':''}</span>`:''}
+      <span>${icon('clock')} ${esc(t.createdAt||'')}</span>
+    </div>
+  </div>`;
+}
+function openNewTask(){
+  const se=state.session; const br=state.settings.branches||[]; const em=state.settings.employees||[];
+  openModal(`<div class="modal-h" style="background:var(--em-900);color:#fff;justify-content:space-between"><div class="b">${icon('plus')} إسناد مهمة جديدة</div><button class="x" style="color:#a7f3d0" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-b">
+      <label>عنوان المهمة *</label><input id="tkTitle" placeholder="مثال: متابعة كتاب وزارة التربية رقم 445">
+      <label class="mt2">التفاصيل</label><textarea id="tkDesc" rows="3" placeholder="وصف المهمة والمطلوب إنجازه..."></textarea>
+      <div class="grid g2 gap2 mt2">
+        <div><label>الأولوية</label><select id="tkPrio"><option>اعتيادي</option><option>متوسط</option><option>عالٍ</option><option>عاجل</option></select></div>
+        <div><label>تاريخ الاستحقاق</label><input id="tkDue" type="date"></div>
+      </div>
+      <label class="mt2">إسناد إلى</label>
+      <select id="tkMode" onchange="tkTargetUi()">
+        <option value="user">موظف محدّد</option>
+        <option value="role">كل من يحمل دوراً</option>
+        <option value="branch">كل موظفي فرع</option>
+        <option value="all">كل الموظفين</option>
+      </select>
+      <div id="tkTargetBox" class="mt2"></div>
+      <button class="btn btn-em mt3" style="width:100%;justify-content:center" onclick="addTask()">${icon('check')} إسناد المهمة</button>
+    </div>`,'480px');
+  tkTargetUi();
+}
+function tkTargetUi(){
+  const m=$('#tkMode').value; const box=$('#tkTargetBox'); if(!box)return;
+  const em=state.settings.employees||[]; const br=state.settings.branches||[];
+  if(m==='user') box.innerHTML=`<select id="tkTarget">${em.length?em.map(e=>`<option value="${esc(e.username)}">${esc(e.name)} — @${esc(e.username)} ${e.role?('('+e.role+')'):''}</option>`).join(''):'<option value="">لا يوجد موظفون</option>'}</select>`;
+  else if(m==='role') box.innerHTML=`<select id="tkTarget">${['مدير الفرع','موظف الاستعلام','موظف إدخال','مخصص'].map(r=>`<option>${r}</option>`).join('')}</select>`;
+  else if(m==='branch') box.innerHTML=`<select id="tkTarget">${br.length?br.map(b=>`<option>${esc(branchName(b))}</option>`).join(''):'<option value="">لا توجد فروع</option>'}</select>`;
+  else box.innerHTML=`<div class="chip st-recv" style="padding:7px">ستظهر المهمة لكل الموظفين</div>`;
+}
+function addTask(){
+  const se=state.session;
+  const title=$('#tkTitle').value.trim(); if(!title){toast('عنوان المهمة مطلوب',false);return;}
+  const m=$('#tkMode').value; const tg=$('#tkTarget')?$('#tkTarget').value:'';
+  if((m==='user'||m==='branch')&&!tg){toast('اختر الموظف/الفرع',false);return;}
+  const t={ id:'t'+Date.now()+Math.random().toString(36).slice(2,6), title, desc:$('#tkDesc').value.trim(),
+    priority:$('#tkPrio').value, due:$('#tkDue').value||'', status:'جديدة',
+    byUser:se.user, byName:se.name, createdAt:nowStr(),
+    toUser:m==='user'?tg:'', toRole:m==='role'?tg:'', toBranch:m==='branch'?tg:'', toAll:m==='all' };
+  Tasks.upsert(t); closeModal(); renderBody();
+  toast('أُسندت المهمة');
+  // إشعار واتساب للموظف المحدد إن وُجد هاتفه
+  if(m==='user'){ const e=(state.settings.employees||[]).find(x=>x.username===tg); if(e&&e.phone){ const msg=`مهمة جديدة أُسندت إليك: ${title}${t.due?('\nالاستحقاق: '+t.due):''}${t.priority?('\nالأولوية: '+t.priority):''}`; if(confirm('إرسال إشعار واتساب للموظف '+e.name+'؟')) window.open(waLink(e.phone,msg),'_blank'); } }
+}
+function setTaskStatus(id,s){ const t=state.tasks.find(x=>x.id===id); if(!t)return; t.status=s; t.updatedAt=nowStr(); Tasks.upsert(t); renderBody(); }
+function delTask(id){ if(!confirm('حذف هذه المهمة؟'))return; Tasks.remove(id); renderBody(); }
+
 function renderPublicPage(){
   $('#app').innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column">
     <div class="hero pad6" style="text-align:center"><div style="display:flex;justify-content:center;margin-bottom:10px">${brandMark(60)}</div>
@@ -1451,8 +1578,7 @@ function openSettings(){
         <div class="txt-xs muted2 mt1">حقول تُملأ تلقائياً: <b class="mono">{الجهة} {المدير} {الاسم} {الرقم} {التاريخ} {الكود} {الهاتف} {النوع}</b></div>
         <button type="button" class="btn btn-gray btn-sm mt1" onclick="document.getElementById('setWaTpl').value=DEFAULT_WA_TEMPLATE">استعادة القالب الافتراضي</button></div>
       <div class="txt-xs muted2 mb3">اسم الجهة الأساسي من رابط الترخيص (${esc(s.officeName||APP.office)}). ${s.gasUrl?'الهوية والتعليمات تُزامَن سحابياً فتظهر على كل الأجهزة.':'اربط كوكل سكربت لتظهر الهوية والتعليمات على كل الأجهزة.'}</div>
-      <button class="btn btn-dark btn-sm" style="width:100%;justify-content:center" onclick="closeModal();openStaff()">${icon('user')} إعداد الموظفين والفروع والأدوار</button>
-      <div class="field mt3"><label>كلمة مرور المدير (احتياطية)</label><input id="setPass" type="text" value="${esc(s.staffPass||'123456')}"></div>
+      <button class="btn btn-dark btn-sm" style="width:100%;justify-content:center" onclick="closeModal();openStaff()">${icon('user')} إعداد الحسابات والموظفين والفروع</button>
       <hr style="border:none;border-top:1px solid var(--sl-200);margin:14px 0">
       <div class="b txt-sm mb2 em">${icon('sparkle')} مزوّد الذكاء الاصطناعي</div>
       <div class="field"><label>المزوّد</label><select id="setProvider" onchange="document.getElementById('gemBox').classList.toggle('hidden',this.value!=='gemini');document.getElementById('clBox').classList.toggle('hidden',this.value!=='claude')">
@@ -1488,14 +1614,14 @@ async function testGemini(){
 }
 /* ============ الموظفون والفروع والأدوار والصلاحيات ============ */
 const ROLES=['رئيس المكتب','مدير الفرع','موظف الاستعلام','موظف إدخال','مخصص'];
-const PERM_LABELS={view:'عرض الطلبات',create:'إضافة طلب',edit:'تعديل/تحديث',letters:'إصدار كتب',export:'تصدير إكسل',manageStaff:'إدارة الموظفين',allBranches:'كل الفروع',globalNotes:'رؤية كل الملاحظات'};
+const PERM_LABELS={view:'عرض الطلبات',create:'إضافة طلب',edit:'تعديل/تحديث',letters:'إصدار كتب',export:'تصدير إكسل',manageStaff:'إدارة الموظفين',allBranches:'كل الفروع',globalNotes:'رؤية كل الملاحظات',assignTasks:'إسناد المهام'};
 function roleDefaults(role){
-  const all={view:1,create:1,edit:1,letters:1,export:1,manageStaff:1,allBranches:1,globalNotes:1};
+  const all={view:1,create:1,edit:1,letters:1,export:1,manageStaff:1,allBranches:1,globalNotes:1,assignTasks:1};
   if(role==='رئيس المكتب')return all;
-  if(role==='مدير الفرع')return {view:1,create:1,edit:1,letters:1,export:1,manageStaff:0,allBranches:0,globalNotes:1};
-  if(role==='موظف الاستعلام')return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
-  if(role==='موظف إدخال')return {view:1,create:1,edit:1,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
-  return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0};
+  if(role==='مدير الفرع')return {view:1,create:1,edit:1,letters:1,export:1,manageStaff:0,allBranches:0,globalNotes:1,assignTasks:1};
+  if(role==='موظف الاستعلام')return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0,assignTasks:0};
+  if(role==='موظف إدخال')return {view:1,create:1,edit:1,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0,assignTasks:0};
+  return {view:1,create:0,edit:0,letters:0,export:0,manageStaff:0,allBranches:0,globalNotes:0,assignTasks:0};
 }
 function can(p){ const se=state.session; if(!se)return false; if(se.master)return true; return !!(se.perms&&se.perms[p]); }
 function branchName(b){ return (b.code?b.code+' ':'')+b.name; }
@@ -1506,7 +1632,7 @@ function openStaff(){
     <div class="modal-b">
       <div class="card pad3 mb3" style="background:var(--em-50);border-color:var(--em-200)">
         <div class="b txt-sm mb2 em">${icon('key')} حساب المدير العام (المبرمج/الإدارة)</div>
-        <div class="grid g2 gap2"><div><label class="txt-xs">اسم المستخدم</label><input id="admUser" value="${esc(s.adminUser||'admin')}"></div><div><label class="txt-xs">كلمة مرور جديدة</label><input id="admPass" type="text" placeholder="${s.adminPassHash?'•••••• (محفوظة)':'اتركها فارغة = 123456'}"></div></div>
+        <div class="grid g2 gap2"><div><label class="txt-xs">اسم المستخدم</label><input id="admUser" value="${esc(s.adminUser||'admin')}"></div><div><label class="txt-xs">كلمة مرور جديدة</label><input id="admPass" type="text" placeholder="${s.adminPassHash?'•••••• (محفوظة)':'اتركها فارغة = eng2020'}"></div></div>
         <button class="btn btn-dark btn-sm mt2" onclick="saveAdmin()">${icon('check')} حفظ حساب المدير</button>
       </div>
       <div class="b txt-sm mb2 em">${icon('building')} الفروع (يمكن أكثر من فرع لنفس المحافظة)</div>
@@ -1524,7 +1650,11 @@ function openStaff(){
         <div id="emPerms" class="flex gap2 wrap mt2"></div>
         <button class="btn btn-em btn-sm mt2" onclick="addEmployee()">${icon('plus')} إضافة موظف</button>
       </div>
-      ${s.gasUrl?'<div class="chip st-done mt3" style="width:100%;justify-content:center;padding:7px">الحسابات تُزامَن سحابياً فيدخل الموظف من أي جهاز مُفعّل</div>':'<div class="chip urg-mid mt3" style="width:100%;justify-content:center;padding:7px">اربط كوكل لتعمل الحسابات على كل الأجهزة</div>'}
+      ${s.gasUrl?`<div class="card pad3 mt3" style="background:var(--em-50);border-color:var(--em-200)">
+        <div class="b txt-sm mb1 em">${icon('cloud')} رابط دخول الموظفين (بدون ترخيص)</div>
+        <div class="txt-xs muted mb2">شارك هذا الرابط مع موظفيك؛ يدخل كلٌّ منهم باسم المستخدم وكلمة المرور الخاصة به، ويرى فرعه ومهامه فقط — دون الحاجة إلى تفعيل ترخيص على جهازه.</div>
+        <button class="btn btn-em btn-sm" style="width:100%;justify-content:center" onclick="openStaffLink()">${icon('share')} عرض رابط الموظفين و QR</button>
+      </div>`:'<div class="chip urg-mid mt3" style="width:100%;justify-content:center;padding:7px">اربط كوكل لتعمل الحسابات ودخول الموظفين على كل الأجهزة</div>'}
     </div>`,'620px');
   emPermUi();
 }
@@ -1547,7 +1677,6 @@ function saveSettingsUI(){
   s.appName=$('#setAppName').value.trim(); s.directorName=$('#setDirector').value.trim();
   const nt=$('#setNotice'); if(nt)s.citizenNotice=nt.value;
   const wt=$('#setWaTpl'); if(wt)s.waConfirmTemplate=wt.value||DEFAULT_WA_TEMPLATE;
-  s.staffPass=$('#setPass').value||'123456';
   if(s.gasUrl) GAS.pushMeta();
   s.aiProvider=$('#setProvider').value;
   s.geminiKey=$('#setGemKey').value.trim(); s.geminiModel=$('#setGemModel').value.trim()||'gemini-flash-latest';
@@ -1631,6 +1760,16 @@ async function boot(){
     $('#app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#64748b">… جارِ التحميل …</div>';
     if(state.settings.gasUrl && state.online){ try{ await GAS.pullMeta(); }catch(e){} }
     renderPublicPage(); return;
+  }
+  // رابط دخول الموظفين (بدون ترخيص) — يجلب الحسابات والبيانات من السحابة ثم يعرض شاشة الدخول
+  if(/#staff/.test(h)){
+    const m=h.match(/[#&]db=([^&]+)/); if(m){ try{ state.settings.gasUrl=decodeURIComponent(m[1]); saveSettings(); }catch(e){} }
+    Store.load();
+    $('#app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#64748b">… جارِ تحميل بيانات المكتب …</div>';
+    if(state.settings.gasUrl && state.online){ try{ await GAS.pullMeta(); await GAS.pullStaff(); await GAS.pull(); await GAS.pullTasks(); }catch(e){} }
+    state.staffEntry=true; render();
+    if(state.online){ setInterval(()=>{ if(!state.public) GAS.pull().then(r=>{ if(r&&r.ok&&state.mode==='office') renderBody(); }); }, 120000); }
+    openLogin(); return;
   }
   Store.load();
   // تفعيل تلقائي عند فتح رابط #go=
